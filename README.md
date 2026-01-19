@@ -59,15 +59,10 @@ graph TB
     LLM --> MS
     VS --> S3
     
-    style A1 fill:#38b2ac,color:#fff
-    style A2 fill:#718096,color:#fff
-    style A3 fill:#718096,color:#fff
-    style A4 fill:#718096,color:#fff
-    style OPENSHIFT fill:#1a365d,color:#fff
-    style LLAMASTACK fill:#2c5282,color:#fff
-    style AISERVICES fill:#2d3748,color:#fff
-    style DATA fill:#2d3748,color:#fff
-    style AGENTS fill:#2d3748,color:#fff
+    style A1 fill:#fff,stroke:#c00,color:#c00
+    style A2 fill:#fff,stroke:#999,color:#999
+    style A3 fill:#fff,stroke:#999,color:#999
+    style A4 fill:#fff,stroke:#999,color:#999
 ```
 
 ### Platform Components
@@ -125,26 +120,25 @@ graph TB
         USER["User Query"] --> ROUTER["LLM Router"]
     end
     
-    ROUTER --> VS["Vector Search<br/>Agent"]
-    ROUTER --> GQ["Graph Query<br/>Agent"]
-    ROUTER --> CE["Cypher Expert<br/>Agent"]
+    ROUTER --> VS["Vector Search Agent"]
+    ROUTER --> GQ["Graph Query Agent"]
+    ROUTER --> CE["Cypher Expert Agent"]
     
-    VS --> CRITIC["Answer Critic<br/>Agent"]
+    VS --> CRITIC["Answer Critic Agent"]
     GQ --> CRITIC
     CE --> CRITIC
     
     CRITIC --> RESPONSE["Final Response"]
     
-    VS --> VSDB[("LlamaStack<br/>Vector Store")]
-    GQ --> NEO4J[("Neo4j<br/>Knowledge Graph")]
+    VS --> VSDB[("LlamaStack Vector Store")]
+    GQ --> NEO4J[("Neo4j Knowledge Graph")]
     CE --> NEO4J
     
-    style ORCHESTRATOR fill:#1a365d,color:#fff
-    style ROUTER fill:#38b2ac,color:#fff
-    style VS fill:#4299e1,color:#fff
-    style GQ fill:#48bb78,color:#fff
-    style CE fill:#ed8936,color:#fff
-    style CRITIC fill:#9f7aea,color:#fff
+    style ROUTER fill:#fff,stroke:#c00,color:#c00
+    style VS fill:#fff,stroke:#c00,color:#c00
+    style GQ fill:#fff,stroke:#c00,color:#c00
+    style CE fill:#fff,stroke:#c00,color:#c00
+    style CRITIC fill:#fff,stroke:#c00,color:#c00
 ```
 
 ### Capabilities
