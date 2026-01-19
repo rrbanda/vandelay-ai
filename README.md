@@ -14,6 +14,8 @@
   <img src="https://img.shields.io/badge/Framework-Google%20ADK-4285F4?style=flat-square" alt="Google ADK"/>
 </p>
 
+> **Note**: Vandelay Banking Corporation is a **fictional company** created for demonstration purposes. This project showcases AI agent development patterns and is not affiliated with any real financial institution.
+
 ---
 
 ## About Vandelay Banking Corporation
@@ -396,12 +398,13 @@ This is an internal Vandelay Banking Corporation project. For contribution guide
 
 ## License
 
-Copyright © 2024-2026 Vandelay Banking Corporation. All rights reserved.
+This project is provided for **demonstration and educational purposes**.
 
-This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
+See [LICENSE](LICENSE) for details.
 
 ---
 
 <p align="center">
-  <sub>Built with ❤️ by the Vandelay AI Platform Team</sub>
+  <sub>A demo project showcasing AI agent development on OpenShift AI</sub><br/>
+  <sub>Vandelay Banking Corporation is a fictional company</sub>
 </p>
