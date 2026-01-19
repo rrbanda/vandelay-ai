@@ -1,0 +1,69 @@
+# =============================================================================
+# Vandelay Search - Pod (Standalone for Podman Desktop)
+# =============================================================================
+# Simple Pod definition for quick testing with Podman Desktop
+# Use deployment.yaml for OpenShift production
+#
+# Usage:
+#   1. Build the image (from repo root):
+#      podman build -t vandelay-search:latest -f vandelay_search/Dockerfile vandelay_search/
+#
+#   2. Run with podman kube play:
+#      podman kube play openshift/vandelay-search/pod.yaml
+#
+#   3. Access the web UI:
+#      http://localhost:8000
+#
+#   4. Stop:
+#      podman kube down openshift/vandelay-search/pod.yaml
+# =============================================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vandelay-search-pod
+  labels:
+    app: vandelay-search
+spec:
+  containers:
+    - name: vandelay-search
+      image: vandelay-search:latest
+      imagePullPolicy: Never  # Use local image
+      ports:
+        - containerPort: 8000
+          hostPort: 8000  # Maps to localhost:8000
+      env:
+        # Neo4j Configuration
+        # Use host.containers.internal for Podman to reach host services
+        - name: NEO4J_URI
+          value: "bolt://host.containers.internal:7687"
+        - name: NEO4J_USERNAME
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          value: "changeme"  # Change this!
+        
+        # LLM Configuration
+        - name: OPENAI_API_BASE
+          value: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io/v1/openai/v1"
+        - name: OPENAI_API_KEY
+          value: "not-needed"
+        - name: ADK_MODEL
+          value: "openai/gemini-llm/gemini-2.5-flash"
+        
+        # Vector Store
+        - name: LLAMASTACK_BASE_URL
+          value: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io"
+        - name: VECTOR_STORE_ID
+          value: "vs_f207aee7-bf89-411b-b713-929a8cf12f44"
+        - name: VECTOR_STORE_VERIFY_SSL
+          value: "false"
+      
+      resources:
+        limits:
+          memory: "2Gi"
+          cpu: "1"
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+  
+  restartPolicy: OnFailure

@@ -1,0 +1,460 @@
+# =============================================================================
+# Vandelay Search Agent Configuration
+# =============================================================================
+# Configuration for the FSI GraphRAG Agent.
+#
+# NOTE: Data ingestion settings (extraction, loading) have been moved to
+#       data_ingestion/config.yaml
+#
+# Before running this agent, you must ingest data first:
+#   python -m data_ingestion.run_ingestion
+# =============================================================================
+
+# =============================================================================
+# LLM Configuration
+# =============================================================================
+llm:
+  model: "openai/gemini-llm/gemini-2.5-flash"
+  api_base: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io/v1/openai/v1"
+  api_key: "not-needed"
+  temperature: 0.1
+
+# =============================================================================
+# Neo4j Configuration
+# =============================================================================
+# IMPORTANT: Set credentials via environment variables for security:
+#   export NEO4J_URI="bolt://your-server:7687"
+#   export NEO4J_USERNAME="neo4j"
+#   export NEO4J_PASSWORD="your-secure-password"
+#
+# Environment variables ALWAYS override values below (see config_loader.py).
+# The values below are defaults for local development only.
+neo4j:
+  uri: "bolt://localhost:7687"
+  username: "neo4j"
+  # DO NOT commit real passwords. Set NEO4J_PASSWORD environment variable.
+  password: ""
+
+# =============================================================================
+# LlamaStack Vector Store Configuration
+# =============================================================================
+# Environment variable overrides:
+#   LLAMASTACK_BASE_URL - Vector store API base URL
+#   VECTOR_STORE_ID - Vector store identifier
+#   VECTOR_STORE_VERIFY_SSL - Set to 'false' only for dev with self-signed certs
+vector_store:
+  provider: "llamastack"
+  base_url: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io"
+  vector_store_id: "vs_f207aee7-bf89-411b-b713-929a8cf12f44"
+  vector_store_name: "acme-bank-docs"
+  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+  embedding_dimension: 384
+  similarity_top_k: 5
+  # SSL verification: true for production security, false only for dev with self-signed certs
+  verify_ssl: false  # TODO: Set to true for production
+
+# =============================================================================
+# Orchestrator Agent
+# =============================================================================
+orchestrator:
+  name: "vandelay_search"
+  description: "Vandelay Financial Corporation AI Assistant - Products, Compliance & Risk"
+  
+  instruction: |
+    You are the Vandelay Financial Corporation AI Assistant, helping with banking products, compliance, and risk questions.
+    
+    You coordinate specialized sub-agents to answer questions using the AGENTIC RAG pattern.
+    
+    ## Sub-Agents Available
+    
+    1. **vector_search_agent** - For semantic search on banking documents:
+       - "How do I open a checking account?"
+       - "What are your mortgage rates?"
+       - "Tell me about credit card rewards"
+       - "What is the overdraft fee?"
+       - "How does fraud protection work?"
+       - "What are the AML requirements?"
+    
+    2. **graph_query_agent** - For structured data about products, regulations, and risk:
+       - "What products does the bank offer?"
+       - "List all checking account products"
+       - "What regulations does the bank comply with?"
+       - "What are the Basel III capital requirements?"
+       - "Show me high-risk portfolios"
+       - "What are our counterparty exposures?"
+    
+    3. **cypher_expert_agent** - For complex analysis queries:
+       - "Show the graph schema"
+       - "Find all products with annual fees over $100"
+       - "What penalties exist for non-compliance?"
+    
+    4. **answer_critic_agent** - For validating answer quality:
+       - Evaluates if retrieved information fully answers the question
+       - Returns completeness_score (0-100) and recommendation
+       - Generates follow-up queries if information is incomplete
+    
+    ## Routing Guidelines
+    
+    - For product/policy/FAQ questions -> vector_search_agent
+    - For structured lookups (products, regulations, risk) -> graph_query_agent  
+    - For complex analysis -> cypher_expert_agent
+    - AFTER retrieval -> answer_critic_agent to validate
+    
+    ## IMPORTANT: Hybrid Queries (Parallel Tool Calls)
+    
+    Some questions require BOTH vector search AND graph queries. For these:
+    - Call MULTIPLE agents in PARALLEL (same turn, not sequential)
+    - Combine results from both before responding
+    
+    Examples of hybrid queries:
+    - "Explain high-risk customer procedures and list current high-risk customers"
+      -> vector_search_agent (for procedures/policies)
+      -> graph_query_agent (for customer list)
+    
+    - "What are the AML requirements and which customers are flagged?"
+      -> vector_search_agent (for AML policy details)
+      -> graph_query_agent (for flagged customers)
+    
+    - "Tell me about mortgage products and their current rates"
+      -> vector_search_agent (for product descriptions)
+      -> graph_query_agent (for rate data)
+    
+    When you see questions with "and" or multiple distinct information needs,
+    call both agents in parallel to get comprehensive answers.
+    
+    ## Answer Validation Loop
+    
+    After receiving results from retriever agents:
+    
+    1. Route the question to the appropriate retriever agent(s) - USE PARALLEL CALLS for hybrid queries
+    2. Call answer_critic_agent with the question and ALL retrieval results
+    3. Act on the critic's recommendation (complete/partial/retry/escalate)
+    4. Synthesize final response combining all sources
+    
+    ## Important Rules
+    
+    - For hybrid queries, call BOTH vector_search_agent AND graph_query_agent in parallel
+    - ALWAYS evaluate with answer_critic after retrieval
+    - NEVER loop more than 3 times
+    - Always be helpful and professional
+
+# =============================================================================
+# Sub-Agents Configuration
+# =============================================================================
+sub_agents:
+  vector_search:
+    name: "vector_search_agent"
+    description: "Semantic search on banking policies, products, and FAQs"
+    instruction: |
+      You are a Banking Knowledge specialist for Vandelay Financial Corporation.
+      
+      Your job: Find relevant information from banking documents using semantic search.
+      
+      ## Tools
+      - `vector_search_docs`: Search banking documents by semantic similarity
+      
+      ## Document Types Available
+      - Account types guide (checking, savings, CDs)
+      - Loan products guide (mortgages, personal loans, auto loans)
+      - Credit cards guide (rewards, travel, secured)
+      - Banking FAQs and how-to guides
+      - AML compliance policy (anti-money laundering)
+      - Basel III overview (capital requirements)
+      - Credit risk assessment (portfolios, counterparties)
+      
+      ## Guidelines
+      - Provide clear, helpful answers
+      - Include specific details like rates, fees, requirements
+      - Mention which document the information comes from
+
+  graph_query:
+    name: "graph_query_agent"
+    description: "Structured queries on products, regulations, and risk data"
+    instruction: |
+      You are an FSI Knowledge Graph specialist for Vandelay Financial Corporation.
+      
+      Your job: Query structured data about products, regulations, and risk.
+      
+      ## Graph Schema
+      
+      ### Node Types
+      - Bank: The bank entity
+      - Product: Financial products (checking, savings, loans, credit cards)
+      - Fee, Feature, Reward, Requirement: Product components
+      - Regulation: Financial regulations (Basel III, AML, KYC)
+      - RegulatoryRequirement, RiskIndicator, Penalty: Regulation components
+      - Portfolio, Counterparty, RiskFactor, MitigationStrategy: Risk entities
+      - Document: Source documents
+      
+      ### Key Relationships
+      - (Bank)-[:OFFERS]->(Product)
+      - (Bank)-[:COMPLIES_WITH]->(Regulation)
+      - (Bank)-[:OWNS]->(Portfolio)
+      - (*)-[:EXTRACTED_FROM]->(Document)
+      
+      ## Available Tools
+      - get_all_products, get_products_by_category, get_product_details
+      - get_all_regulations, get_regulation_details, get_regulatory_requirements
+      - get_all_portfolios, get_portfolio_details, get_high_risk_portfolios
+      - get_graph_schema, run_cypher_query
+
+  cypher_expert:
+    name: "cypher_expert_agent"
+    description: "Complex Cypher queries for custom analysis"
+    instruction: |
+      You are a Cypher Query expert for Vandelay Financial Corporation's FSI Knowledge Graph.
+      
+      Your job: Write and execute complex Cypher queries for custom analysis.
+      
+      ## CRITICAL: Always Get Schema First!
+      
+      ALWAYS call `get_graph_schema` or `get_graph_schema_text` FIRST before writing ANY query!
+      This gives you the exact node labels, property names, and relationships available.
+      Do NOT guess at property names or labels - use only what the schema shows.
+      
+      ## Tools Available
+      
+      - `get_graph_schema`: Returns structured schema (JSON format with labels, attributes, relationships)
+      - `get_graph_schema_text`: Returns human-readable schema text
+      - `run_cypher_query`: Execute a Cypher query (includes validation and retry)
+      - `get_node_count`: Quick count of nodes by label
+      
+      ## FSI Domain Knowledge
+      
+      Standard node types in this graph:
+      - Bank, Product, Fee, Feature, Reward, Requirement
+      - Regulation, RegulatoryRequirement, RiskIndicator, Penalty
+      - Portfolio, Counterparty, RiskFactor, MitigationStrategy
+      - Customer, Account, Transaction, Document
+      
+      Standard relationships:
+      - (Bank)-[:OFFERS]->(Product)
+      - (Bank)-[:COMPLIES_WITH]->(Regulation)
+      - (Bank)-[:OWNS]->(Portfolio)
+      - (Product)-[:HAS_FEE]->(Fee), [:HAS_FEATURE]->(Feature), [:HAS_REWARD]->(Reward)
+      - (Regulation)-[:HAS_REQUIREMENT]->(RegulatoryRequirement)
+      - (Portfolio)-[:HAS_RISK_FACTOR]->(RiskFactor), [:MITIGATED_BY]->(MitigationStrategy)
+      - (Customer)-[:OWNS]->(Account), [:HAS_TRANSACTION]->(Transaction)
+      - (*)-[:EXTRACTED_FROM]->(Document)
+      
+      ## Query Best Practices
+      
+      1. NEVER return embedding/vector properties - they are large arrays that cause errors
+      2. ALWAYS use LIMIT to prevent huge results (the tool adds LIMIT 100 if missing)
+      3. Use OPTIONAL MATCH for relationships that may not exist
+      4. Use collect() for aggregating related entities
+      5. Use toLower() for case-insensitive matching
+      6. Use parameterized syntax: $paramName (not {paramName})
+      
+      ## Error Handling
+      
+      If a query fails:
+      1. Check the error message for hints (unknown label, unknown property, syntax error)
+      2. Call get_graph_schema to verify labels and property names
+      3. Retry with corrected query (up to 3 attempts)
+      4. If still failing, explain the issue and suggest alternatives
+      
+      ## Example Queries
+      
+      Count high-risk customers:
+      ```cypher
+      MATCH (c:Customer) WHERE c.risk_level IN ['High', 'Critical'] RETURN count(c) as count
+      ```
+      
+      Find products with fees over a threshold:
+      ```cypher
+      MATCH (p:Product)-[:HAS_FEE]->(f:Fee)
+      WHERE f.amount > 50
+      RETURN p.name, f.name, f.amount
+      ORDER BY f.amount DESC LIMIT 20
+      ```
+      
+      Get portfolio risk summary:
+      ```cypher
+      MATCH (p:Portfolio)
+      OPTIONAL MATCH (p)-[:HAS_RISK_FACTOR]->(rf:RiskFactor)
+      RETURN p.name, p.risk_score, collect(rf.name) as risk_factors
+      ORDER BY p.risk_score DESC LIMIT 10
+      ```
+
+# =============================================================================
+# Answer Critic Sub-Agent
+# =============================================================================
+answer_critic:
+  name: "answer_critic_agent"
+  description: "Evaluates answer completeness and generates follow-up queries"
+  
+  thresholds:
+    complete: 80
+    partial: 60
+    retry: 40
+  
+  instruction: |
+    You are an Answer Quality Critic for Vandelay Financial Corporation's AI Assistant.
+    
+    Evaluate whether retrieved information fully answers the user's question.
+    
+    ## Scoring (0-100)
+    - 90-100: Fully answered with comprehensive details
+    - 70-89: Mostly answered, minor gaps
+    - 50-69: Partially answered, significant gaps
+    - 30-49: Tangentially related only
+    - 0-29: Not answered at all
+    
+    ## Recommendations
+    - "complete": Ready to answer (score >= 80)
+    - "partial": Can answer with noted limitations (score 60-79)
+    - "retry": Need more retrieval (score 40-59)
+    - "escalate": Cannot answer (score < 40)
+    
+    ## Output Format
+    Return a JSON object with completeness_score, recommendation, 
+    missing_information, follow_up_queries, and caveats.
+
+# =============================================================================
+# Agentic RAG Loop Configuration
+# =============================================================================
+agentic_loop:
+  max_iterations: 3
+  enable_critic: true
+  enable_quick_check: true
+  quick_check_min_results: 1
+  
+  routing_hints:
+    checking: "get_products_by_category"
+    savings: "get_products_by_category"
+    mortgage: "get_products_by_category"
+    credit card: "get_products_by_category"
+    loan: "get_products_by_category"
+    fees: "get_product_with_fees"
+    basel: "get_regulation_requirements"
+    aml: "get_regulation_requirements"
+    kyc: "get_regulation_requirements"
+    compliance: "get_compliance_status"
+    penalty: "get_compliance_penalties"
+    portfolio: "get_portfolio_risks"
+    risk: "get_high_risk_items"
+    counterparty: "get_counterparty_exposure"
+    default: "vector_search_docs"
+
+# =============================================================================
+# Specialized Cypher Tools
+# =============================================================================
+specialized_tools:
+  get_products_by_category:
+    description: "Get products filtered by category"
+    cypher: |
+      MATCH (p:Product)
+      WHERE toLower(p.category) CONTAINS toLower($category)
+         OR toLower(p.subcategory) CONTAINS toLower($category)
+      OPTIONAL MATCH (p)-[:HAS_FEE]->(f:Fee)
+      RETURN p.name as name, p.category as category, p.subcategory as subcategory,
+             p.interest_rate_apy as apy, p.interest_rate_apr as apr,
+             p.minimum_balance as min_balance, p.best_for as best_for,
+             collect(DISTINCT {fee: f.name, amount: f.amount}) as fees
+      ORDER BY p.name
+    parameters:
+      - name: category
+        type: string
+        required: true
+  
+  get_product_with_fees:
+    description: "Get full product details including fees, features, and requirements"
+    cypher: |
+      MATCH (p:Product)
+      WHERE toLower(p.name) CONTAINS toLower($product_name)
+      OPTIONAL MATCH (p)-[:HAS_FEE]->(f:Fee)
+      OPTIONAL MATCH (p)-[:HAS_FEATURE]->(feat:Feature)
+      OPTIONAL MATCH (p)-[:HAS_REWARD]->(r:Reward)
+      OPTIONAL MATCH (p)-[:REQUIRES]->(req:Requirement)
+      RETURN p {.*} as product,
+             collect(DISTINCT f {.*}) as fees,
+             collect(DISTINCT feat {.*}) as features,
+             collect(DISTINCT r {.*}) as rewards,
+             collect(DISTINCT req {.*}) as requirements
+    parameters:
+      - name: product_name
+        type: string
+        required: true
+  
+  get_regulation_requirements:
+    description: "Get regulatory requirements with thresholds"
+    cypher: |
+      MATCH (r:Regulation)
+      WHERE toLower(r.name) CONTAINS toLower($regulation_name)
+         OR toLower(r.full_name) CONTAINS toLower($regulation_name)
+      OPTIONAL MATCH (r)-[:HAS_REQUIREMENT]->(req:RegulatoryRequirement)
+      RETURN r.name as regulation, r.type as type, r.description as description,
+             collect(req {.name, .category, .threshold_value, .applies_to}) as requirements
+    parameters:
+      - name: regulation_name
+        type: string
+        required: true
+  
+  get_compliance_penalties:
+    description: "Get penalties for regulatory non-compliance"
+    cypher: |
+      MATCH (r:Regulation)-[:HAS_PENALTY]->(p:Penalty)
+      RETURN r.name as regulation, p.name as penalty, p.type as penalty_type,
+             p.amount as amount, p.severity as severity, p.description as description
+      ORDER BY CASE p.severity WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 ELSE 3 END
+    parameters: []
+  
+  get_portfolio_risks:
+    description: "Get portfolio risk factors and mitigation strategies"
+    cypher: |
+      MATCH (p:Portfolio)
+      WHERE toLower(p.name) CONTAINS toLower($portfolio_name)
+      OPTIONAL MATCH (p)-[:HAS_RISK_FACTOR]->(rf:RiskFactor)
+      OPTIONAL MATCH (p)-[:MITIGATED_BY]->(ms:MitigationStrategy)
+      RETURN p {.name, .type, .asset_class, .total_value, .risk_score, .risk_rating} as portfolio,
+             collect(DISTINCT rf {.name, .severity}) as risk_factors,
+             collect(DISTINCT ms {.name, .priority, .implementation_status}) as mitigations
+    parameters:
+      - name: portfolio_name
+        type: string
+        required: true
+  
+  get_high_risk_items:
+    description: "Get all high-risk portfolios and counterparties"
+    cypher: |
+      MATCH (p:Portfolio)
+      WHERE p.risk_rating IN ['High', 'Critical'] OR p.risk_score >= 60
+      WITH collect(p {.name, .risk_score, .risk_rating}) as portfolios
+      MATCH (c:Counterparty)
+      WHERE c.risk_assessment IN ['High', 'Critical']
+      RETURN portfolios, collect(c {.name, .total_exposure, .risk_assessment}) as counterparties
+    parameters: []
+  
+  get_counterparty_exposure:
+    description: "Get counterparty exposure information"
+    cypher: |
+      MATCH (c:Counterparty)
+      WHERE $name IS NULL OR toLower(c.name) CONTAINS toLower($name)
+      RETURN c.name as name, c.type as type, c.industry as industry,
+             c.credit_rating as rating, c.total_exposure as exposure,
+             c.risk_assessment as risk_level
+      ORDER BY c.total_exposure DESC
+    parameters:
+      - name: name
+        type: string
+        required: false
+  
+  get_compliance_status:
+    description: "Get bank compliance status with regulations"
+    cypher: |
+      MATCH (b:Bank)-[:COMPLIES_WITH]->(r:Regulation)
+      OPTIONAL MATCH (r)-[:HAS_REQUIREMENT]->(req:RegulatoryRequirement)
+      RETURN b.name as bank,
+             collect(DISTINCT {regulation: r.name, type: r.type, requirements: count(req)}) as regulations
+    parameters: []
+
+# =============================================================================
+# Memory Service Configuration
+# =============================================================================
+memory:
+  provider: "inmemory"
+  settings:
+    auto_save_sessions: true
+    preload_memories: true
+    max_memories_per_query: 5

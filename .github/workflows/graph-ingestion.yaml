@@ -1,0 +1,95 @@
+name: Graph Ingestion
+
+on:
+  workflow_dispatch:
+    inputs:
+      clear_data:
+        description: 'Clear existing data before ingestion'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      git_url:
+        description: 'Git URL for data source (leave empty for repo data)'
+        required: false
+        default: ''
+        type: string
+      git_branch:
+        description: 'Git branch for data source'
+        required: false
+        default: 'main'
+        type: string
+      cypher_file:
+        description: 'Path to Cypher file'
+        required: false
+        default: 'data/fsi_sample_data.cypher'
+        type: string
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  ingest-graph:
+    name: Ingest Graph Data
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml neo4j httpx
+
+      - name: Run Graph Ingestion
+        env:
+          NEO4J_URI: ${{ secrets.NEO4J_URI }}
+          NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          cd ${{ github.workspace }}
+          
+          # Build command with options
+          CMD="python -m data_ingestion.ingest_graph"
+          
+          if [ "${{ github.event.inputs.clear_data }}" = "true" ]; then
+            CMD="$CMD --clear"
+          else
+            CMD="$CMD --no-clear"
+          fi
+          
+          if [ -n "${{ github.event.inputs.git_url }}" ]; then
+            CMD="$CMD --git-url ${{ github.event.inputs.git_url }}"
+          fi
+          
+          if [ -n "${{ github.event.inputs.git_branch }}" ]; then
+            CMD="$CMD --git-branch ${{ github.event.inputs.git_branch }}"
+          fi
+          
+          if [ -n "${{ github.event.inputs.cypher_file }}" ]; then
+            CMD="$CMD --cypher-file ${{ github.event.inputs.cypher_file }}"
+          fi
+          
+          echo "Running: $CMD"
+          $CMD
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Graph Ingestion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Clear data**: ${{ github.event.inputs.clear_data }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cypher file**: ${{ github.event.inputs.cypher_file }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.git_url }}" ]; then
+            echo "- **Data source**: ${{ github.event.inputs.git_url }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Data source**: Repository data" >> $GITHUB_STEP_SUMMARY
+          fi

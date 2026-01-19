@@ -1,0 +1,121 @@
+Vandelay Financial Corporation
+Credit Risk Assessment Framework
+
+Overview:
+Credit risk is the potential for loss due to a borrower's failure to meet contractual obligations. This framework outlines Vandelay Financial Corporation's methodology for assessing and managing credit risk across all lending portfolios.
+
+Portfolio Risk Assessment:
+
+Residential Mortgage Portfolio (PORT-001):
+- Total Value: $2,500,000,000
+- Number of Loans: 12,500
+- Average Loan Size: $200,000
+- Asset Class: Residential Mortgages (30Y Fixed, 15Y Fixed, HELOC)
+- Risk Category: Credit Risk
+- Risk Score: 62/100 (Moderate-Elevated)
+- Current Exposure: $75,000,000
+- Delinquency Rate: 2.3%
+- Key Risk Factors:
+  * Rising interest rates affecting borrower affordability
+  * Geographic concentration in California and Texas markets
+  * 2.3% of loans in 90+ day delinquency (industry avg: 1.8%)
+  * Housing market volatility in tech-heavy regions
+
+Commercial Lending Portfolio (PORT-002):
+- Total Value: $850,000,000
+- Number of Loans: 340
+- Average Loan Size: $2,500,000
+- Asset Class: Business Term Loans, Lines of Credit
+- Risk Category: Credit Risk
+- Risk Score: 45/100 (Moderate)
+- Current Exposure: $50,000,000
+- Delinquency Rate: 1.8%
+- Key Customers: TechStart Solutions LLC, and 339 others
+- Key Risk Factors:
+  * Concentration in technology sector (35% of portfolio)
+  * Rising interest rates increasing debt service burden
+  * Some exposure to early-stage companies
+
+Customer Credit Risk Assessment:
+
+Sarah Chen (CUST-001):
+- Type: Individual
+- Products: 30Y Fixed Rate Mortgage ($450,000 balance)
+- Risk Level: LOW
+- Credit Score: 785 (Excellent)
+- Debt-to-Income: 28%
+- Payment History: Perfect (24 months on-time)
+- Employment: Stable (Software Engineer, 5+ years)
+- Risk Assessment: Excellent credit profile, low default probability
+
+TechStart Solutions LLC (CUST-002):
+- Type: Corporate (Small Business)
+- Products: Business Term Loan ($250,000 balance)
+- Risk Level: MEDIUM
+- Business Credit Score: 72
+- Debt Service Coverage Ratio: 1.4x
+- Revenue Trend: Growing (15% YoY)
+- Industry: Technology (moderate cyclical risk)
+- Risk Assessment: Healthy business with adequate cash flow, monitor tech sector conditions
+
+Oceanic Holdings Ltd (CUST-003):
+- Type: Corporate (Offshore)
+- Products: Corporate Account (no lending relationship)
+- Risk Level: HIGH
+- Country: Cyprus (high-risk jurisdiction)
+- Beneficial Ownership: Complex multi-jurisdiction structure
+- AML Flags: Multiple suspicious transactions flagged
+- Account Status: Under Review
+- Risk Assessment: HIGH RISK - Enhanced monitoring required, potential SAR filing
+
+Global Import Partners (CUST-004):
+- Type: Corporate (Offshore)
+- Products: Corporate Account (no lending relationship)
+- Risk Level: HIGH
+- Country: British Virgin Islands (tax haven)
+- Beneficial Ownership: Undisclosed
+- AML Flags: Circular transaction pattern with Oceanic Holdings
+- Account Status: Under Review
+- Risk Assessment: HIGH RISK - Connected to CUST-003, enhanced monitoring required
+
+Risk Mitigation Strategies:
+
+For Residential Mortgage Portfolio:
+1. Maintain strict underwriting standards (max 43% DTI, min 620 credit score)
+2. Require PMI for loans above 80% LTV
+3. Geographic diversification targets (no state > 25% of portfolio)
+4. Interest rate hedging through derivatives
+5. Increase loan loss reserves to 2.5% of portfolio value
+6. Early intervention program for borrowers showing stress signals
+
+For Commercial Lending Portfolio:
+1. Industry concentration limits (no sector > 35%)
+2. Minimum DSCR requirement of 1.25x
+3. Annual financial statement review for loans > $500,000
+4. Personal guarantees required for small business loans
+5. Collateral requirements for equipment and real estate loans
+6. Covenant monitoring and early warning triggers
+
+For High-Risk Customers:
+1. Enhanced transaction monitoring (real-time for flagged accounts)
+2. Quarterly KYC refresh and beneficial ownership verification
+3. Automatic escalation for transactions > $50,000
+4. SAR filing within 30 days of suspicious activity identification
+5. Consider relationship termination for repeated violations
+
+Credit Risk Limits (Vandelay Policy):
+- Single borrower exposure: Maximum 10% of Tier 1 capital
+- Industry concentration: Maximum 25% of total credit exposure
+- Geographic concentration: Maximum 25% per state
+- Product concentration: Maximum 40% in any single product type
+- High-risk customer exposure: Maximum 5% of total deposits
+
+Reporting Requirements:
+Credit risk reports must be submitted to:
+- Credit Risk Committee: Weekly
+- Executive Risk Committee: Monthly
+- Board Risk Committee: Quarterly
+- OCC/Federal Reserve: Quarterly (Call Report)
+- External Auditors: Annually
+
+Contact: creditrisk@vandelayfinancial.com

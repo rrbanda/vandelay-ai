@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c5282;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#38b2ac;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4fd1c5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Logo Mark - Stylized V with ascending bars representing growth/AI -->
+  <g transform="translate(10, 15)">
+    <!-- Left bar of V -->
+    <rect x="0" y="20" width="12" height="50" rx="2" fill="url(#brandGradient)"/>
+    <!-- Middle-left bar -->
+    <rect x="18" y="30" width="12" height="40" rx="2" fill="url(#brandGradient)"/>
+    <!-- Center point / bottom of V -->
+    <rect x="36" y="45" width="12" height="25" rx="2" fill="url(#accentGradient)"/>
+    <!-- Middle-right bar -->
+    <rect x="54" y="30" width="12" height="40" rx="2" fill="url(#brandGradient)"/>
+    <!-- Right bar of V -->
+    <rect x="72" y="20" width="12" height="50" rx="2" fill="url(#brandGradient)"/>
+    
+    <!-- AI Spark accent -->
+    <circle cx="42" cy="12" r="6" fill="url(#accentGradient)"/>
+    <circle cx="42" cy="12" r="3" fill="#ffffff"/>
+  </g>
+  
+  <!-- Company Name -->
+  <text x="105" y="52" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="28" font-weight="700" fill="#1a365d">
+    VANDELAY
+  </text>
+  <text x="105" y="75" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="14" font-weight="400" fill="#4a5568" letter-spacing="3">
+    BANKING CORPORATION
+  </text>
+  
+  <!-- Tagline -->
+  <text x="295" y="63" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" fill="#38b2ac">
+    AI-First Banking
+  </text>
+</svg>

@@ -1,0 +1,16 @@
+# =============================================================================
+# Vandelay Search - Namespace
+# =============================================================================
+# Creates a dedicated namespace/project for the Vandelay Search agent
+#
+# Podman Desktop: podman kube play openshift/vandelay-search/namespace.yaml
+# OpenShift:      oc apply -f openshift/vandelay-search/namespace.yaml
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vandelay-search
+  labels:
+    app.kubernetes.io/name: vandelay-search
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/part-of: vandelay-ai

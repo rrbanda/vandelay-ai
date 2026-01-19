@@ -1,0 +1,30 @@
+Basel III Capital Requirements Framework
+
+Basel III is an international regulatory framework developed by the Basel Committee on Banking Supervision (BCBS) in response to the 2008 financial crisis. The framework was introduced in 2010 and has been progressively implemented by banks worldwide.
+
+Key Capital Requirements:
+- Common Equity Tier 1 (CET1) capital ratio: minimum 4.5% of risk-weighted assets
+- Tier 1 capital ratio: minimum 6% of risk-weighted assets  
+- Total capital ratio: minimum 8% of risk-weighted assets
+- Capital conservation buffer: additional 2.5% of CET1
+- Countercyclical buffer: 0-2.5% as determined by national regulators
+
+Liquidity Requirements:
+The Liquidity Coverage Ratio (LCR) requires banks to hold sufficient high-quality liquid assets (HQLA) to cover net cash outflows over a 30-day stress period. Banks must maintain an LCR of at least 100%.
+
+The Net Stable Funding Ratio (NSFR) requires banks to maintain a stable funding profile in relation to their assets and off-balance sheet activities. The NSFR must be at least 100%.
+
+Leverage Ratio:
+Banks must maintain a leverage ratio of at least 3%, calculated as Tier 1 capital divided by total exposure. This acts as a backstop to the risk-based capital requirements.
+
+Implementation Timeline:
+- 2013: Initial implementation began
+- 2015: Liquidity Coverage Ratio phased in
+- 2018: Net Stable Funding Ratio fully implemented
+- 2019: Leverage ratio became binding requirement
+
+Banks Subject to Basel III:
+Major international banks including Acme Bank, Global Finance Corp, and other systemically important financial institutions must comply with Basel III requirements. Non-compliance can result in restrictions on dividend payments and bonus distributions.
+
+Risk Categories Addressed:
+Basel III specifically addresses credit risk through standardized and internal ratings-based approaches, market risk through the Fundamental Review of the Trading Book (FRTB), and operational risk through the standardized approach.

@@ -1,0 +1,92 @@
+# =============================================================================
+# Vandelay AI - Local Development Stack (TEMPLATE)
+# =============================================================================
+# Copy this to local-stack.yaml and fill in your values:
+#   cp local-stack.template.yaml local-stack.yaml
+#
+# IMPORTANT: local-stack.yaml is gitignored - never commit secrets!
+#
+# Usage:
+#   podman kube play openshift/local-stack.yaml
+#   podman kube down openshift/local-stack.yaml
+#
+# Services:
+#   - Neo4j Browser:     http://localhost:7474
+#   - Neo4j Bolt:        bolt://localhost:7687
+#   - ADK Web UI:        http://localhost:8000
+#
+# Build agent image first:
+#   podman build -t vandelay-search:latest -f vandelay_search/Dockerfile vandelay_search/
+# =============================================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vandelay-local-stack
+  labels:
+    app: vandelay-ai
+spec:
+  containers:
+    # -------------------------------------------------------------------------
+    # Neo4j Database
+    # -------------------------------------------------------------------------
+    - name: neo4j
+      image: docker.io/library/neo4j:5-community
+      ports:
+        - containerPort: 7474
+          hostPort: 7474
+          name: neo4j-http
+        - containerPort: 7687
+          hostPort: 7687
+          name: neo4j-bolt
+      env:
+        # CHANGE THIS PASSWORD!
+        - name: NEO4J_AUTH
+          value: "neo4j/CHANGE_ME"
+        - name: NEO4J_PLUGINS
+          value: '["apoc"]'
+        - name: NEO4J_server_memory_heap_initial__size
+          value: "512m"
+        - name: NEO4J_server_memory_heap_max__size
+          value: "1G"
+        # NOTE: Query logging (query.log) is Enterprise Edition only
+        # Use --log-queries flag in ingest_graph.py to see queries
+      volumeMounts:
+        - name: neo4j-data
+          mountPath: /data
+
+    # -------------------------------------------------------------------------
+    # Vandelay Search Agent
+    # -------------------------------------------------------------------------
+    - name: vandelay-search
+      image: localhost/vandelay-search:latest
+      ports:
+        - containerPort: 8000
+          hostPort: 8000
+          name: adk-web
+      env:
+        # Neo4j - localhost works because containers share network in a pod
+        - name: NEO4J_URI
+          value: "bolt://localhost:7687"
+        - name: NEO4J_USERNAME
+          value: "neo4j"
+        # CHANGE THIS TO MATCH NEO4J_AUTH PASSWORD ABOVE!
+        - name: NEO4J_PASSWORD
+          value: "CHANGE_ME"
+        # LLM Configuration - UPDATE THESE!
+        - name: OPENAI_API_BASE
+          value: "https://your-llm-endpoint/v1"
+        - name: OPENAI_API_KEY
+          value: "your-api-key"
+        - name: ADK_MODEL
+          value: "openai/your-model-name"
+        # Vector Store - UPDATE THESE!
+        - name: LLAMASTACK_BASE_URL
+          value: "https://your-llamastack-endpoint"
+        - name: VECTOR_STORE_ID
+          value: "your-vector-store-id"
+        - name: VECTOR_STORE_VERIFY_SSL
+          value: "false"
+
+  volumes:
+    - name: neo4j-data
+      emptyDir: {}

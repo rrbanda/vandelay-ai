@@ -1,0 +1,76 @@
+# =============================================================================
+# Vandelay Search - Docker Ignore
+# =============================================================================
+# Files and directories to exclude from the container build
+# =============================================================================
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# ADK local files (session data should not be baked into image)
+.adk/
+*.db
+sessions.db
+
+# Kubernetes manifests (not needed in container)
+k8s/
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+tests/
+test_*.py
+*_test.py
+pytest.ini
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment files with secrets
+.env
+.env.*
+*.env
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

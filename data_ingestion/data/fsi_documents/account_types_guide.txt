@@ -1,0 +1,78 @@
+Acme Bank Account Types Guide
+
+CHECKING ACCOUNTS
+
+Basic Checking:
+- Monthly fee: $12 (waived with $500 minimum balance)
+- Free debit card and online banking
+- No interest earned
+- Unlimited transactions
+- Best for: Everyday banking needs
+
+Premium Checking:
+- Monthly fee: $25 (waived with $5,000 minimum balance)
+- 0.05% APY interest
+- Free cashier's checks and wire transfers
+- Priority customer service
+- Best for: Higher balance customers who want perks
+
+Student Checking:
+- No monthly fee (ages 17-24)
+- Free debit card
+- No minimum balance required
+- Overdraft protection available
+- Best for: College students and young adults
+
+SAVINGS ACCOUNTS
+
+Regular Savings:
+- 0.50% APY interest
+- $300 minimum opening deposit
+- 6 free withdrawals per month
+- FDIC insured up to $250,000
+- Best for: Building an emergency fund
+
+High-Yield Savings:
+- 4.25% APY interest (promotional rate)
+- $1,000 minimum balance
+- Online access only
+- Best for: Maximizing savings growth
+
+Money Market Account:
+- 3.50% APY interest
+- $2,500 minimum balance
+- Check writing privileges
+- Tiered interest rates
+- Best for: Higher balances with access needs
+
+CERTIFICATES OF DEPOSIT (CDs)
+
+6-Month CD: 4.00% APY, $1,000 minimum
+12-Month CD: 4.50% APY, $1,000 minimum
+24-Month CD: 4.75% APY, $1,000 minimum
+60-Month CD: 5.00% APY, $1,000 minimum
+
+Early withdrawal penalty: 90 days of interest for CDs under 12 months, 180 days for longer terms.
+
+HOW TO OPEN AN ACCOUNT
+
+Required Documents:
+1. Government-issued photo ID (driver's license or passport)
+2. Social Security Number
+3. Proof of address (utility bill or lease)
+4. Initial deposit
+
+You can open an account:
+- Online at acmebank.com (takes 10 minutes)
+- At any branch location
+- By phone at 1-800-ACME-BANK
+
+ACCOUNT PROTECTION
+
+All accounts are FDIC insured up to $250,000 per depositor. For joint accounts, coverage extends to $500,000.
+
+Fraud protection includes:
+- Zero liability for unauthorized transactions
+- Real-time fraud alerts via text/email
+- Card lock feature in mobile app
+- 24/7 fraud monitoring

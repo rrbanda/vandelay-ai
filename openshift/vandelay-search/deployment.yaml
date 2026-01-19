@@ -1,0 +1,95 @@
+# =============================================================================
+# Vandelay Search - Deployment
+# =============================================================================
+# Deploys the Vandelay Search FSI GraphRAG Agent with ADK Web UI
+#
+# Build image first:
+#   Podman:   podman build -t vandelay-search:latest -f vandelay_search/Dockerfile vandelay_search/
+#   OpenShift: Use BuildConfig or push to registry
+#
+# Podman Desktop: podman kube play openshift/vandelay-search/deployment.yaml
+# OpenShift:      oc apply -f openshift/vandelay-search/deployment.yaml
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vandelay-search
+  namespace: vandelay-search
+  labels:
+    app.kubernetes.io/name: vandelay-search
+    app.kubernetes.io/component: agent
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vandelay-search
+  template:
+    metadata:
+      labels:
+        app: vandelay-search
+        app.kubernetes.io/name: vandelay-search
+    spec:
+      containers:
+        - name: vandelay-search
+          # For OpenShift, update to your registry path:
+          # image: image-registry.openshift-image-registry.svc:5000/vandelay-search/vandelay-search:latest
+          image: vandelay-search:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          
+          # Environment from ConfigMap and Secret
+          envFrom:
+            - configMapRef:
+                name: vandelay-search-config
+            - secretRef:
+                name: vandelay-search-secrets
+          
+          # Resource limits
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /list-apps
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /list-apps
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Security context - OpenShift compatible
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+      
+      # Pod-level security
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Restart policy
+      restartPolicy: Always

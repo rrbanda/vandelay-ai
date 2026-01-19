@@ -1,0 +1,30 @@
+# =============================================================================
+# Vandelay Search - Service
+# =============================================================================
+# Exposes the Vandelay Search agent
+#
+# For Podman Desktop: Use NodePort to access via localhost
+# For OpenShift: Use ClusterIP with Route for external access
+#
+# Podman Desktop: podman kube play openshift/vandelay-search/service.yaml
+# OpenShift:      oc apply -f openshift/vandelay-search/service.yaml
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: vandelay-search-service
+  namespace: vandelay-search
+  labels:
+    app.kubernetes.io/name: vandelay-search
+    app.kubernetes.io/component: service
+spec:
+  # Use NodePort for Podman Desktop, ClusterIP for OpenShift with Route
+  type: NodePort
+  selector:
+    app: vandelay-search
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+      nodePort: 30800  # Access via localhost:30800 with Podman Desktop

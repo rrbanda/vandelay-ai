@@ -1,0 +1,33 @@
+# =============================================================================
+# Vandelay Search - Kustomization
+# =============================================================================
+# Kustomize configuration for deploying all resources together
+#
+# Usage with kubectl/oc:
+#   oc apply -k openshift/vandelay-search/
+#
+# Usage with Podman (apply individually):
+#   podman kube play openshift/vandelay-search/pod.yaml
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: vandelay-search
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  # Uncomment for OpenShift deployment:
+  # - route.yaml
+
+commonLabels:
+  app.kubernetes.io/name: vandelay-search
+  app.kubernetes.io/part-of: vandelay-ai
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: vandelay-search
+    newTag: latest

@@ -1,0 +1,35 @@
+# =============================================================================
+# Vandelay Search - ConfigMap
+# =============================================================================
+# Non-sensitive configuration for the Vandelay Search agent
+#
+# Podman Desktop: podman kube play openshift/vandelay-search/configmap.yaml
+# OpenShift:      oc apply -f openshift/vandelay-search/configmap.yaml
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vandelay-search-config
+  namespace: vandelay-search
+  labels:
+    app.kubernetes.io/name: vandelay-search
+    app.kubernetes.io/component: config
+data:
+  # Neo4j Configuration
+  NEO4J_URI: "bolt://neo4j-service:7687"
+  NEO4J_USERNAME: "neo4j"
+  
+  # LLM Configuration
+  # Update these values for your LLM provider
+  OPENAI_API_BASE: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io/v1/openai/v1"
+  ADK_MODEL: "openai/gemini-llm/gemini-2.5-flash"
+  
+  # LlamaStack Vector Store
+  LLAMASTACK_BASE_URL: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io"
+  VECTOR_STORE_ID: "vs_f207aee7-bf89-411b-b713-929a8cf12f44"
+  # Set to 'true' for production, 'false' for dev with self-signed certs
+  VECTOR_STORE_VERIFY_SSL: "false"
+  
+  # ADK Configuration
+  # For Vertex AI: set GOOGLE_GENAI_USE_VERTEXAI=true
+  GOOGLE_GENAI_USE_VERTEXAI: "false"

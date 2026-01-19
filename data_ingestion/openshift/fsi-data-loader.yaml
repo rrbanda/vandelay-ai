@@ -1,0 +1,446 @@
+---
+# ConfigMap containing the FSI sample data Cypher script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fsi-sample-data
+  namespace: fsi-graphrag
+  labels:
+    app: neo4j
+    component: data-loader
+data:
+  load-fsi-data.cypher: |
+    // ============================================================
+    // FSI GraphRAG Sample Data
+    // Financial Services Knowledge Graph
+    // ============================================================
+    
+    // Clear existing data (optional - comment out for incremental loads)
+    // MATCH (n) DETACH DELETE n;
+    
+    // ============================================================
+    // 1. REGULATORY FRAMEWORKS
+    // ============================================================
+    
+    CREATE (basel:Regulation {
+      id: 'REG-001',
+      name: 'Basel III',
+      framework: 'Basel',
+      description: 'International regulatory framework for banks, focusing on capital adequacy, stress testing, and market liquidity risk.',
+      requirements: 'Minimum capital ratios, leverage ratio, liquidity coverage ratio (LCR), net stable funding ratio (NSFR)',
+      effective_date: date('2013-01-01'),
+      jurisdiction: 'International'
+    })
+    
+    CREATE (aml:Regulation {
+      id: 'REG-002',
+      name: 'AML',
+      framework: 'AML',
+      description: 'Anti-Money Laundering regulations requiring financial institutions to detect and prevent money laundering activities.',
+      requirements: 'Customer due diligence, transaction monitoring, suspicious activity reporting, record keeping',
+      effective_date: date('1970-01-01'),
+      jurisdiction: 'International'
+    })
+    
+    CREATE (kyc:Regulation {
+      id: 'REG-003',
+      name: 'KYC',
+      framework: 'KYC',
+      description: 'Know Your Customer requirements for verifying customer identity and assessing risk profiles.',
+      requirements: 'Identity verification, risk assessment, ongoing monitoring, enhanced due diligence for high-risk customers',
+      effective_date: date('2001-01-01'),
+      jurisdiction: 'International'
+    })
+    
+    CREATE (mifid:Regulation {
+      id: 'REG-004',
+      name: 'MiFID II',
+      framework: 'MiFID',
+      description: 'Markets in Financial Instruments Directive II - EU regulation for investment services.',
+      requirements: 'Best execution, transaction reporting, product governance, cost transparency',
+      effective_date: date('2018-01-03'),
+      jurisdiction: 'EU'
+    })
+    
+    CREATE (dodd:Regulation {
+      id: 'REG-005',
+      name: 'Dodd-Frank',
+      framework: 'Dodd-Frank',
+      description: 'US financial reform act for stability and consumer protection.',
+      requirements: 'Derivatives clearing, Volcker Rule, stress testing, consumer protection',
+      effective_date: date('2010-07-21'),
+      jurisdiction: 'US'
+    })
+    
+    // ============================================================
+    // 2. FINANCIAL INSTITUTIONS
+    // ============================================================
+    
+    CREATE (acme:Bank {
+      id: 'BANK-001',
+      name: 'Acme Bank',
+      type: 'Commercial Bank',
+      tier: 1,
+      country: 'US',
+      total_assets: 500000000000
+    })
+    
+    CREATE (global:Bank {
+      id: 'BANK-002',
+      name: 'Global Finance Corp',
+      type: 'Investment Bank',
+      tier: 1,
+      country: 'UK',
+      total_assets: 750000000000
+    })
+    
+    CREATE (alpha:Counterparty {
+      id: 'CP-001',
+      name: 'Alpha Corp',
+      type: 'Corporate',
+      industry: 'Technology',
+      credit_rating: 'A+',
+      country: 'US'
+    })
+    
+    CREATE (beta:Counterparty {
+      id: 'CP-002',
+      name: 'Beta Holdings',
+      type: 'Hedge Fund',
+      industry: 'Finance',
+      credit_rating: 'BBB',
+      country: 'Cayman Islands'
+    })
+    
+    // ============================================================
+    // 3. CUSTOMERS
+    // ============================================================
+    
+    CREATE (c1:Customer {
+      id: 'C-12345',
+      name: 'John Smith',
+      type: 'Individual',
+      risk_level: 'Medium',
+      kyc_status: 'Verified',
+      kyc_date: date('2023-06-15'),
+      country: 'US'
+    })
+    
+    CREATE (c2:Customer {
+      id: 'C-67890',
+      name: 'Tech Innovations Inc',
+      type: 'Corporate',
+      risk_level: 'Low',
+      kyc_status: 'Verified',
+      kyc_date: date('2023-03-20'),
+      country: 'US'
+    })
+    
+    CREATE (c3:Customer {
+      id: 'C-11111',
+      name: 'Offshore Trading Ltd',
+      type: 'Corporate',
+      risk_level: 'High',
+      kyc_status: 'Enhanced Due Diligence',
+      kyc_date: date('2024-01-10'),
+      country: 'Cyprus'
+    })
+    
+    // ============================================================
+    // 4. ACCOUNTS
+    // ============================================================
+    
+    CREATE (a1:Account {
+      id: 'ACC-001',
+      type: 'Checking',
+      balance: 150000.00,
+      currency: 'USD',
+      status: 'Active',
+      opened_date: date('2020-01-15')
+    })
+    
+    CREATE (a2:Account {
+      id: 'ACC-002',
+      type: 'Investment',
+      balance: 2500000.00,
+      currency: 'USD',
+      status: 'Active',
+      opened_date: date('2021-06-01')
+    })
+    
+    CREATE (a3:Account {
+      id: 'ACC-003',
+      type: 'Corporate',
+      balance: 15000000.00,
+      currency: 'USD',
+      status: 'Active',
+      opened_date: date('2019-03-10')
+    })
+    
+    // ============================================================
+    // 5. FINANCIAL PRODUCTS
+    // ============================================================
+    
+    CREATE (mort1:Product {
+      id: 'PROD-001',
+      name: 'Fixed Rate Mortgage 30Y',
+      type: 'Mortgage',
+      interest_rate: 6.5,
+      term_years: 30,
+      min_amount: 100000,
+      max_amount: 2000000
+    })
+    
+    CREATE (mort2:Product {
+      id: 'PROD-002',
+      name: 'Variable Rate Mortgage 15Y',
+      type: 'Mortgage',
+      interest_rate: 5.25,
+      term_years: 15,
+      min_amount: 50000,
+      max_amount: 1500000
+    })
+    
+    CREATE (deriv1:Product {
+      id: 'PROD-003',
+      name: 'Interest Rate Swap',
+      type: 'Derivative',
+      notional: 10000000,
+      maturity: date('2028-12-31')
+    })
+    
+    CREATE (deriv2:Product {
+      id: 'PROD-004',
+      name: 'Credit Default Swap',
+      type: 'Derivative',
+      notional: 5000000,
+      maturity: date('2026-06-30')
+    })
+    
+    // ============================================================
+    // 6. PORTFOLIOS
+    // ============================================================
+    
+    CREATE (port1:Portfolio {
+      id: 'P-001',
+      name: 'Mortgage Portfolio A',
+      type: 'Lending',
+      total_value: 500000000,
+      num_assets: 2500
+    })
+    
+    CREATE (port2:Portfolio {
+      id: 'P-002',
+      name: 'Derivatives Trading Book',
+      type: 'Trading',
+      total_value: 150000000,
+      num_assets: 500
+    })
+    
+    // ============================================================
+    // 7. RISK CATEGORIES
+    // ============================================================
+    
+    CREATE (cr:Risk {
+      id: 'RISK-001',
+      category: 'credit_risk',
+      name: 'Credit Risk',
+      description: 'Risk of loss from counterparty default',
+      score: 65
+    })
+    
+    CREATE (mr:Risk {
+      id: 'RISK-002',
+      category: 'market_risk',
+      name: 'Market Risk',
+      description: 'Risk of loss from market price movements',
+      score: 45
+    })
+    
+    CREATE (or:Risk {
+      id: 'RISK-003',
+      category: 'operational_risk',
+      name: 'Operational Risk',
+      description: 'Risk of loss from failed processes or systems',
+      score: 30
+    })
+    
+    CREATE (lr:Risk {
+      id: 'RISK-004',
+      category: 'liquidity_risk',
+      name: 'Liquidity Risk',
+      description: 'Risk of inability to meet obligations',
+      score: 25
+    })
+    
+    // ============================================================
+    // 8. TRANSACTIONS
+    // ============================================================
+    
+    CREATE (t1:Transaction {
+      id: 'TXN-001',
+      type: 'Wire Transfer',
+      amount: 50000.00,
+      currency: 'USD',
+      date: datetime('2024-01-15T10:30:00'),
+      counterparty: 'External Account',
+      status: 'Completed'
+    })
+    
+    CREATE (t2:Transaction {
+      id: 'TXN-002',
+      type: 'Wire Transfer',
+      amount: 150000.00,
+      currency: 'USD',
+      date: datetime('2024-01-16T14:45:00'),
+      counterparty: 'Offshore Holdings',
+      status: 'Flagged',
+      flag_reason: 'Large amount to high-risk jurisdiction'
+    })
+    
+    CREATE (t3:Transaction {
+      id: 'TXN-003',
+      type: 'Securities Purchase',
+      amount: 500000.00,
+      currency: 'USD',
+      date: datetime('2024-01-17T09:15:00'),
+      counterparty: 'NYSE',
+      status: 'Completed'
+    })
+    
+    // ============================================================
+    // 9. DOCUMENTS
+    // ============================================================
+    
+    CREATE (doc1:Document {
+      id: 'DOC-001',
+      title: 'Basel III Implementation Guide',
+      type: 'Regulatory Guide',
+      content: 'Comprehensive guide to implementing Basel III capital and liquidity requirements for financial institutions.',
+      summary: 'Basel III implementation framework covering capital ratios, leverage, and liquidity standards.',
+      created_date: date('2023-01-15')
+    })
+    
+    CREATE (doc2:Document {
+      id: 'DOC-002',
+      title: 'AML Transaction Monitoring Best Practices',
+      type: 'Policy Document',
+      content: 'Best practices for implementing effective transaction monitoring systems to detect suspicious activities.',
+      summary: 'Guidelines for AML transaction monitoring including thresholds, patterns, and escalation procedures.',
+      created_date: date('2023-06-20')
+    })
+    
+    // ============================================================
+    // 10. RELATIONSHIPS
+    // ============================================================
+    
+    // Bank compliance relationships
+    CREATE (acme)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(basel)
+    CREATE (acme)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(aml)
+    CREATE (acme)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(kyc)
+    CREATE (acme)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(dodd)
+    
+    CREATE (global)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(basel)
+    CREATE (global)-[:COMPLIES_WITH {last_checked: date('2024-01-01'), status: 'Compliant'}]->(mifid)
+    
+    // Customer-Account relationships
+    CREATE (c1)-[:OWNS]->(a1)
+    CREATE (c2)-[:OWNS]->(a2)
+    CREATE (c3)-[:OWNS]->(a3)
+    
+    // Customer compliance
+    CREATE (c1)-[:COMPLIES_WITH {last_checked: date('2023-06-15')}]->(kyc)
+    CREATE (c2)-[:COMPLIES_WITH {last_checked: date('2023-03-20')}]->(kyc)
+    CREATE (c3)-[:COMPLIES_WITH {last_checked: date('2024-01-10')}]->(kyc)
+    
+    // Account-Transaction relationships
+    CREATE (a1)-[:HAS_TRANSACTION]->(t1)
+    CREATE (a3)-[:HAS_TRANSACTION]->(t2)
+    CREATE (a2)-[:HAS_TRANSACTION]->(t3)
+    
+    // Bank-Product relationships
+    CREATE (acme)-[:OFFERS]->(mort1)
+    CREATE (acme)-[:OFFERS]->(mort2)
+    CREATE (global)-[:OFFERS]->(deriv1)
+    CREATE (global)-[:OFFERS]->(deriv2)
+    
+    // Portfolio-Asset relationships
+    CREATE (port1)-[:CONTAINS]->(mort1)
+    CREATE (port1)-[:CONTAINS]->(mort2)
+    CREATE (port2)-[:CONTAINS]->(deriv1)
+    CREATE (port2)-[:CONTAINS]->(deriv2)
+    
+    // Portfolio-Risk relationships
+    CREATE (port1)-[:HAS_RISK {exposure: 75000000}]->(cr)
+    CREATE (port1)-[:HAS_RISK {exposure: 25000000}]->(lr)
+    CREATE (port2)-[:HAS_RISK {exposure: 45000000}]->(mr)
+    CREATE (port2)-[:HAS_RISK {exposure: 15000000}]->(cr)
+    
+    // Counterparty relationships
+    CREATE (global)-[:TRANSACTS_WITH]->(alpha)
+    CREATE (global)-[:TRANSACTS_WITH]->(beta)
+    CREATE (alpha)-[:LINKED_TO {relationship: 'Swap Agreement'}]->(deriv1)
+    CREATE (beta)-[:LINKED_TO {relationship: 'CDS Reference'}]->(deriv2)
+    
+    // Document relationships
+    CREATE (doc1)-[:RELATES_TO]->(basel)
+    CREATE (doc2)-[:RELATES_TO]->(aml)
+    
+    // ============================================================
+    // Create indexes for performance
+    // ============================================================
+    
+    CREATE INDEX customer_id IF NOT EXISTS FOR (c:Customer) ON (c.id);
+    CREATE INDEX account_id IF NOT EXISTS FOR (a:Account) ON (a.id);
+    CREATE INDEX regulation_name IF NOT EXISTS FOR (r:Regulation) ON (r.name);
+    CREATE INDEX product_type IF NOT EXISTS FOR (p:Product) ON (p.type);
+    CREATE INDEX portfolio_id IF NOT EXISTS FOR (p:Portfolio) ON (p.id);
+    CREATE INDEX transaction_id IF NOT EXISTS FOR (t:Transaction) ON (t.id);
+    CREATE INDEX document_id IF NOT EXISTS FOR (d:Document) ON (d.id);
+    
+    RETURN 'FSI Sample Data Loaded Successfully' as status;
+---
+# Job to load sample data into Neo4j
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fsi-data-loader
+  namespace: fsi-graphrag
+  labels:
+    app: neo4j
+    component: data-loader
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: data-loader
+          image: neo4j:5-community
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Waiting for Neo4j to be ready..."
+              sleep 30
+              
+              echo "Loading FSI sample data..."
+              cat /scripts/load-fsi-data.cypher | cypher-shell \
+                -a bolt://neo4j:7687 \
+                -u neo4j \
+                -p "$NEO4J_PASSWORD"
+              
+              echo "Data loading complete!"
+          env:
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-auth
+                  key: NEO4J_PASSWORD
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: fsi-sample-data

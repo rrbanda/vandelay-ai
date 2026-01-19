@@ -1,0 +1,30 @@
+# =============================================================================
+# Vandelay Search - Route (OpenShift only)
+# =============================================================================
+# Exposes the Vandelay Search agent externally via OpenShift Router
+#
+# This file is for OpenShift deployment only - not used with Podman Desktop
+#
+# OpenShift: oc apply -f openshift/vandelay-search/route.yaml
+# =============================================================================
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: vandelay-search
+  namespace: vandelay-search
+  labels:
+    app.kubernetes.io/name: vandelay-search
+    app.kubernetes.io/component: route
+spec:
+  # Hostname will be auto-generated if not specified
+  # host: vandelay-search.apps.your-cluster.example.com
+  to:
+    kind: Service
+    name: vandelay-search-service
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

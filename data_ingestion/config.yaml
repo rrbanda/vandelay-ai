@@ -1,0 +1,46 @@
+# =============================================================================
+# FSI Data Ingestion Configuration
+# =============================================================================
+# Configuration for loading FSI data into Neo4j Knowledge Graph and 
+# LlamaStack Vector Store.
+#
+# This is a PREREQUISITE for running the RAG agent - data must be ingested
+# before the agent can query it.
+# =============================================================================
+
+# =============================================================================
+# Neo4j Configuration (Knowledge Graph)
+# =============================================================================
+neo4j:
+  uri: "bolt://localhost:7687"
+  username: "neo4j"
+  password: "password"  # Override with NEO4J_PASSWORD env var
+
+# =============================================================================
+# LlamaStack Vector Store Configuration
+# =============================================================================
+vector_store:
+  provider: "llamastack"
+  base_url: ""  # Set via LLAMASTACK_BASE_URL env var
+  vector_store_id: ""  # Set via VECTOR_STORE_ID env var
+  vector_store_name: "fsi-documents"
+  embedding_model: "sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+  embedding_dimension: 768
+  chunk_size: 1000
+  chunk_overlap: 200
+
+# =============================================================================
+# Loading Configuration
+# =============================================================================
+loading:
+  bank_name: "Vandelay Financial Corporation"
+  clear_on_load: false
+  batch_size: 100
+
+# =============================================================================
+# Data Paths
+# =============================================================================
+paths:
+  documents: "data/fsi_documents"
+  cypher_file: "data/fsi_sample_data.cypher"
+  output: "output"

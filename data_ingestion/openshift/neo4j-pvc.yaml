@@ -1,0 +1,34 @@
+---
+# PersistentVolumeClaim for Neo4j data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-data-pvc
+  namespace: fsi-graphrag
+  labels:
+    app: neo4j
+    component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Uses cluster default storage class (ocs-external-storagecluster-ceph-rbd)
+---
+# PersistentVolumeClaim for Neo4j logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neo4j-logs-pvc
+  namespace: fsi-graphrag
+  labels:
+    app: neo4j
+    component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Uses cluster default storage class
