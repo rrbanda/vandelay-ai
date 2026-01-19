@@ -67,21 +67,21 @@ orchestrator:
     
     ## Sub-Agents Available
     
-    1. **vector_search_agent** - For semantic search on banking documents:
+    1. **vector_search_agent** - For policy documents, explanations, and how-to guides:
+       - "What is Basel III?" (policy explanation)
+       - "What are the Basel III capital requirements?" (regulatory overview)
+       - "What are the AML compliance procedures?"
        - "How do I open a checking account?"
        - "What are your mortgage rates?"
        - "Tell me about credit card rewards"
-       - "What is the overdraft fee?"
-       - "How does fraud protection work?"
-       - "What are the AML requirements?"
+       - "Explain the credit risk assessment process"
     
-    2. **graph_query_agent** - For structured data about products, regulations, and risk:
-       - "What products does the bank offer?"
-       - "List all checking account products"
-       - "What regulations does the bank comply with?"
-       - "What are the Basel III capital requirements?"
-       - "Show me high-risk portfolios"
-       - "What are our counterparty exposures?"
+    2. **graph_query_agent** - For specific entity lookups and structured data:
+       - "List all customers" (entity list)
+       - "Which customers are high risk?" (filtered entities)
+       - "What products does the bank offer?" (entity list)
+       - "Show me transactions for customer X" (relationship query)
+       - "What accounts does Sarah Chen have?" (specific entity lookup)
     
     3. **cypher_expert_agent** - For complex analysis queries:
        - "Show the graph schema"
@@ -95,10 +95,14 @@ orchestrator:
     
     ## Routing Guidelines
     
-    - For product/policy/FAQ questions -> vector_search_agent
-    - For structured lookups (products, regulations, risk) -> graph_query_agent  
-    - For complex analysis -> cypher_expert_agent
+    - "What is X?" or "Explain X" or "How does X work?" -> vector_search_agent (documents)
+    - "List all X" or "Which X are Y?" or "Show me X for Y" -> graph_query_agent (entities)
+    - For complex custom analysis -> cypher_expert_agent
     - AFTER retrieval -> answer_critic_agent to validate
+    
+    KEY DISTINCTION:
+    - Asking ABOUT something (explanation) -> vector_search_agent
+    - Asking FOR a list of things (data) -> graph_query_agent
     
     ## IMPORTANT: Hybrid Queries (Parallel Tool Calls)
     
