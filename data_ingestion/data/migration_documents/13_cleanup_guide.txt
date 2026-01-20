@@ -1,0 +1,201 @@
+Source Cluster Cleanup Guide
+
+OVERVIEW
+
+This guide covers the cleanup process after successfully migrating your
+application from VMware OpenShift to BareMetal OpenShift. Cleanup should
+only be performed after thorough validation.
+
+IMPORTANT: Deleted projects cannot be restored!
+
+WHEN TO CLEAN UP
+
+Prerequisites before cleanup:
+- Application successfully deployed on BareMetal cluster
+- All validation checks passed
+- Application running in production for minimum validation period
+- DNS cutover completed (if using Vanity URL)
+- Stakeholders confirmed migration success
+- No pending rollback scenarios
+
+Recommended waiting period:
+- DEV environments: 1-2 weeks after migration
+- UAT environments: 2-4 weeks after migration
+- PROD environments: 4-8 weeks after migration
+
+CLEANUP CHECKLIST
+
+Before initiating cleanup, confirm:
+
+[ ] All functionality validated on BareMetal cluster
+[ ] No traffic going to VMware cluster (check metrics)
+[ ] DNS fully cutover (no references to old cluster)
+[ ] Monitoring/alerting updated for new cluster
+[ ] Documentation updated with new cluster details
+[ ] Team agreement on cleanup timing
+[ ] Backup of any important data or configurations
+
+STEP 1: CLEAN RESOURCES FROM NAMESPACE
+
+Before requesting project deletion, remove all resources from the namespace:
+
+Delete deployments:
+- Scale replicas to 0 or delete deployments
+- Verify no pods running
+
+Delete services and routes:
+- Remove routes
+- Remove services
+
+Delete persistent storage:
+- Delete PersistentVolumeClaims
+- Note: Data will be permanently lost
+
+Delete configs and secrets:
+- Delete ConfigMaps
+- Delete Secrets (if native)
+
+Delete other resources:
+- Delete HorizontalPodAutoscalers
+- Delete ServiceAccounts (created by you)
+- Delete any custom resources
+
+Verification:
+- Confirm namespace is empty or near-empty
+- Only Platform Ops managed resources should remain
+
+STEP 2: REQUEST PROJECT DELETION
+
+Platform Ops handles the actual project/namespace deletion.
+
+For DEV Environments:
+
+1. Navigate to Service Request Portal
+2. Select "Incident" request type
+3. Use template: (search for namespace deletion template)
+4. Provide:
+   - Namespace name
+   - Cluster name (VMware source cluster)
+   - Confirmation that resources are cleaned
+   - Business justification
+
+For UAT/PROD Environments:
+
+1. Navigate to Service Request Portal
+2. Select "Change" request type
+3. Follow change management process
+4. Provide:
+   - Namespace name
+   - Cluster name (VMware source cluster)
+   - Confirmation of successful migration
+   - Validation evidence
+   - Business justification
+
+STEP 3: VERIFY DELETION
+
+After Platform Ops processes the request:
+
+1. Confirm namespace no longer exists on source cluster
+2. Verify no orphaned resources
+3. Update your documentation to reflect deletion
+4. Archive any migration-related tickets
+
+ADDITIONAL CLEANUP TASKS
+
+Firewall Rules:
+
+Old firewall rules (VMware EgressIP) should be deleted:
+- These are NOT automatically deleted
+- Submit firewall rule deletion request
+- Reference the old EgressIP addresses
+
+DNS Entries:
+
+If you had cluster-based DNS entries:
+- Verify they're no longer in use
+- Request deletion of old DNS entries
+- Keep Vanity URL entries active
+
+Certificates:
+
+If you got new certificates:
+- Old certificates will expire naturally
+- No action needed unless security policy requires revocation
+
+Monitoring/Alerting:
+
+- Remove old cluster from monitoring dashboards
+- Disable alerts for old cluster
+- Archive old metrics/logs if needed
+
+Documentation:
+
+- Remove references to old cluster
+- Update architecture diagrams
+- Update runbooks and procedures
+- Archive migration documentation
+
+ROLLBACK CONSIDERATIONS
+
+Before cleanup, have a rollback plan:
+
+If issues discovered after cleanup:
+- Application must be redeployed from scratch
+- Data must be restored from backup
+- Consider keeping backups for extended period
+
+Rollback is NOT possible after:
+- Project is deleted
+- PVCs are deleted (data lost)
+- DNS entries are removed
+
+TROUBLESHOOTING
+
+Issue: Deletion request rejected - resources still exist
+Cause: Not all resources cleaned from namespace
+Solution: List and delete remaining resources, then retry
+
+Issue: Cannot delete resources - permission denied
+Cause: Some resources managed by Platform Ops
+Solution: Include in deletion request; Platform Ops will handle
+
+Issue: PVC deletion fails
+Cause: PVC still in use by pod
+Solution: Delete all pods first, then delete PVCs
+
+Issue: Deletion request not processed
+Cause: Missing information or approvals
+Solution: Check ticket for comments; provide requested information
+
+POST-CLEANUP
+
+After successful cleanup:
+
+1. Confirm resource release:
+   - Quota returned for VMware cluster
+   - Storage released
+   - Network resources freed
+
+2. Final documentation:
+   - Close migration ticket
+   - Document completion date
+   - Note any lessons learned
+
+3. Archive:
+   - Keep migration records for audit
+   - Store validation results
+   - Archive any relevant configurations
+
+CLEANUP SUMMARY
+
+| Environment | Process | Lead Time |
+|-------------|---------|-----------|
+| DEV | Incident ticket | 1-2 days |
+| UAT | Change ticket | 3-5 days |
+| PROD | Change ticket | 5-10 days |
+
+Remember:
+- Clean resources before requesting deletion
+- Project deletion is permanent
+- Wait for appropriate validation period
+- Keep rollback options until cleanup

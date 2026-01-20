@@ -1,0 +1,6 @@
+phase_id,name,description,start_date,end_date,status
+PHASE-DEV,DEV,Development environment migration,2026-01-05,2026-02-28,active
+PHASE-UAT,UAT,User acceptance testing migration,2026-04-01,2026-05-31,upcoming
+PHASE-PROD-W1,PROD_W1,Production wave 1 - critical applications,2026-07-01,2026-08-31,upcoming
+PHASE-PROD-W2,PROD_W2,Production wave 2 - standard applications,2026-10-01,2026-11-30,upcoming
+PHASE-PROD-W3,PROD_W3,Production wave 3 - remaining applications,2027-01-05,2027-02-28,upcoming

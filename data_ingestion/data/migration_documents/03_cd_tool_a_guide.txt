@@ -1,0 +1,131 @@
+CD Tool Type A - Enterprise CD Platform Migration Guide
+
+OVERVIEW
+
+This guide covers migration steps for applications using the Enterprise CD
+Platform (CD Tool Type A). This modern platform supports GitOps workflows
+and requires specific configuration updates for BareMetal cluster deployment.
+
+PREREQUISITES
+
+Before starting:
+- Access to the Enterprise CD Portal
+- Your application's CSI/App ID
+- Destination cluster name
+- Namespace on destination cluster (created by Platform Ops)
+
+STEP 1: LOGIN TO CD PORTAL
+
+1. Navigate to the Enterprise CD Portal
+2. Use your standard enterprise credentials
+3. Verify you have access to your application's project
+
+STEP 2: LOCATE YOUR APPLICATION
+
+1. Go to the Explore tab
+2. Enter or select your application CSI ID
+3. Select the relevant project from the project list
+4. Verify you see your current namespace configuration
+
+STEP 3: ADD DESTINATION NAMESPACE
+
+1. Select the Infrastructure tab
+2. Navigate to OpenShift Namespaces section
+3. Click "Add Namespace" in the top right corner
+4. Enter the following details:
+
+   a. Cluster Type: Select based on environment (DEV/UAT/PROD)
+   b. Cluster Name: Manually enter the destination BareMetal cluster name
+      Note: This may not appear in dropdown - type it manually
+   c. Naming Policy: Select Legacy or Enhanced based on your project
+   d. Provisioning: Select "Partially Managed"
+      (Project already created by Platform Ops)
+
+5. Click "Save Changes"
+6. Validate the destination cluster appears in the VCS Projects list
+
+STEP 4: CREATE NEW ENVIRONMENT
+
+1. Select the Environments tab
+2. You should see your existing environments listed
+3. Click "Create Environment" in the top right corner
+4. Fill in the environment details:
+
+   a. Environment Type: Select "OpenShift"
+   b. Environment Name: Enter a custom name for the new environment
+      Example: "payments-api-baremetal-dev"
+   c. Environment Class: Select from dropdown (DEV/UAT/PROD)
+   d. Cluster/Namespace: Select your destination cluster and namespace
+
+5. Click "Save Changes"
+6. Validate the new environment appears in the environment list
+
+STEP 5: UPDATE MANIFEST CONFIGURATION
+
+Option A: Modify Existing Manifest (Recommended)
+
+Modifying the existing manifest is recommended as it follows Continuous
+Delivery and Trunk-Based Development principles.
+
+1. Access your manifest configuration
+2. Add a deployment step for the destination cluster
+3. Update your values.yaml filename to match the new environment
+   Note: Only the filename needs to change, not the content
+
+Option B: Create New Manifest (Not Recommended)
+
+If you must create a new manifest:
+1. Follow the manifest creation documentation
+2. Create a new values.yaml file matching the new environment name
+3. Note: Multiple manifests contradict CD best practices
+
+STEP 6: UPDATE VALUES FILE
+
+If your values.yaml contains cluster-specific configurations:
+
+1. Create a copy of your values file for the new environment
+2. Update any cluster-specific references:
+   - Cluster name
+   - Route hostnames
+   - Ingress configurations
+   - Storage class names (thin-csi → sc-ontap-nas or dell-csm-sc)
+
+3. Commit changes to your repository
+
+STEP 7: DEPLOY TO DESTINATION
+
+1. Trigger a deployment to the new environment
+2. Monitor the deployment progress in the CD Portal
+3. Verify pods start successfully
+4. Check application logs for any configuration issues
+
+STEP 8: VALIDATE DEPLOYMENT
+
+1. Verify all pods are running
+2. Check service endpoints are accessible
+3. Validate routes are correctly configured
+4. Test application functionality
+
+TROUBLESHOOTING
+
+Issue: Cluster not appearing in dropdown
+Solution: Manually type the BareMetal cluster name in the field
+
+Issue: Namespace not found error
+Solution: Confirm Platform Ops has created the namespace; check spelling
+
+Issue: Deployment fails with storage error
+Solution: Update storage class in your manifests to use BareMetal-compatible
+          storage classes (dell-csm-sc or sc-ontap-nas)
+
+Issue: Route not accessible
+Solution: Verify route hostname matches destination cluster wildcard DNS
+          pattern or your Vanity URL
+
+NEXT STEPS
+
+After successful deployment:
+1. Complete application validation checklist
+2. If using Vanity URL, coordinate DNS cutover
+3. Monitor application in new environment
+4. Plan source cluster cleanup after validation period

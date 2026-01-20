@@ -1,0 +1,17 @@
+# Ignore ADK runtime directories
+.adk/
+**/.adk/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore

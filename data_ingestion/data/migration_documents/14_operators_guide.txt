@@ -1,0 +1,263 @@
+Operators and Additional Resources Guide
+
+OVERVIEW
+
+This guide covers migration of applications that use Kubernetes operators
+or require additional OpenShift resources. These components require
+coordination with Platform Operations for installation on BareMetal clusters.
+
+OPERATORS COVERED
+
+- Redis Operator
+- Couchbase Operator
+- Service Mesh
+- Other operators (general guidance)
+
+IMPORTANT: Operators must be installed by Platform Ops before you can
+deploy your application resources.
+
+GENERAL OPERATOR MIGRATION PROCESS
+
+1. Request operator installation on destination cluster
+2. Platform Ops installs and configures operator
+3. Deploy your application resources (clusters, databases)
+4. Migrate data if applicable
+5. Validate operator and application functionality
+
+REDIS OPERATOR
+
+Prerequisites:
+- Platform Ops installs Redis operator in your namespace
+- Quota and limits sufficient for Redis pods
+
+Request Installation:
+
+1. Raise ticket with Platform Ops:
+   - Request type: Incident (DEV) or Change (UAT/PROD)
+   - Details needed:
+     - Namespace name
+     - Destination cluster name
+     - Redis resource requirements (CPU, memory, storage)
+
+2. Quota updates:
+   - Typical: 4 CPU, 16GB memory per pod
+   - Default 3 pods per cluster
+   - Update limits to: 1 CPU, 4GB memory default
+
+3. Storage requirements:
+   - Specify storage size needed
+   - Storage class: sc-ontap-nas or dell-csm-sc
+   - Increase max storage limit if needed (default may be 50GB)
+
+Deploy Redis Cluster:
+
+After operator is installed:
+
+1. Prepare Redis cluster YAML:
+   - Update storage class reference
+   - Verify image references are accessible
+   - Set appropriate resource limits
+
+2. Apply cluster configuration:
+   - Create the RedisEnterpriseCluster resource
+   - Wait for pods to start (3 rec-* pods + 1 rigger pod)
+
+3. Create route for UI access:
+   - Map to rec-ui service
+   - Use passthrough TLS termination
+   - Access with credentials from secret
+
+4. Create databases as needed (app team responsibility)
+
+Data Migration:
+- Use Redis replication between clusters
+- Or backup/restore approach
+- Coordinate with data team for best strategy
+
+COUCHBASE OPERATOR
+
+Prerequisites:
+- Platform Ops installs Couchbase operator
+- Quota updates for Couchbase pods
+
+Request Installation:
+
+1. Consult with Couchbase engineering team:
+   - Get recommendations for DB size, CPU/memory
+   - Update capacity sheet based on recommendations
+
+2. Raise ticket with Platform Ops:
+   - Request type: Incident or Change
+   - Details needed:
+     - Namespace name
+     - Destination cluster name
+     - Capacity requirements from engineering team
+
+3. Quota updates:
+   - Typical: 4 CPU, 16GB memory per pod
+   - 3 pods typical configuration
+   - Update limits appropriately
+
+4. Storage requirements:
+   - Increase max storage to 100GB if needed
+   - Storage class: sc-ontap-nas or dell-csm-sc
+
+Deploy Couchbase Cluster:
+
+After operator is installed:
+
+1. Create Couchbase secret:
+   - Contains admin credentials for GUI access
+
+2. Apply cluster configuration:
+   - Update storage class in YAML
+   - Verify image references
+   - Apply the cluster YAML
+
+3. Wait for cluster startup (5-10 minutes)
+
+4. Create route for management UI:
+   - Target service: cb-example (or your cluster name)
+   - Port: 18091
+   - TLS termination: passthrough
+   - Insecure traffic: redirect
+
+Data Migration:
+- Use XDCR (Cross Data Center Replication)
+- Or backup/restore approach
+
+SERVICE MESH
+
+Overview:
+- Service Mesh provides advanced traffic management
+- Requires Service Mesh Control Plane in your namespace
+- Sidecars injected into your pods
+
+Request Installation:
+
+1. Raise ticket with Platform Ops:
+   - Request type: Incident (DEV) or Change (UAT/PROD)
+   - Specify: Service Mesh V2 installation
+   - Namespace for control plane
+
+Setup Steps (Platform Ops handles):
+
+1. Adjust quota/limitrange:
+   - Max pods: 15
+   - Max CPU per container: 2
+
+2. Create Service Mesh Control Plane:
+   - Platform Ops creates SMCP in namespace
+   - Default configuration applied
+
+3. Add your namespace as Service Mesh Member
+
+Application Configuration:
+
+After Service Mesh is installed:
+
+1. Add sidecar injection annotation to deployments:
+   ```yaml
+   annotations:
+     sidecar.istio.io/inject: "true"
+   ```
+
+2. Optional sidecar configuration:
+   - proxyMemoryLimit: 512Mi
+   - proxyCPULimit: 500m
+   - proxyCPU: 100m
+   - proxyMemory: 100Mi
+
+3. Deploy your application
+
+4. Access Kiali dashboard for traffic visualization
+
+AUTOSYS CONFIGURATION
+
+If your application uses Autosys for job scheduling:
+
+1. Raise ticket with Platform Ops:
+   - Request: Update Autosys OCCTO configuration
+   - Request type: Incident (DEV) or Change (UAT/PROD)
+   - Provide namespace and job details
+
+2. Platform Ops updates OCCTO configuration
+
+3. Verify jobs can connect to destination cluster
+
+OTHER OPERATORS
+
+General process for any operator:
+
+1. Identify operator requirements:
+   - Operator name and version
+   - Resource requirements
+   - Storage requirements
+
+2. Request installation from Platform Ops:
+   - Raise ticket with details
+   - Include any specific configuration needs
+
+3. Wait for installation confirmation
+
+4. Deploy your application resources
+
+5. Validate operator functionality
+
+TROUBLESHOOTING
+
+Issue: Operator pods not starting
+Possible causes:
+- Quota/limits insufficient
+- Image pull issues
+- Operator not installed
+
+Solution:
+- Check namespace quota
+- Verify image pull secrets
+- Confirm operator installation with Platform Ops
+
+Issue: Operator installed but resources fail
+Possible causes:
+- Storage class incorrect
+- Permissions missing
+- Configuration error
+
+Solution:
+- Verify storage class in resource YAML
+- Check service account permissions
+- Review operator logs for errors
+
+Issue: Data migration fails
+Possible causes:
+- Network connectivity issues
+- Authentication problems
+- Capacity issues
+
+Solution:
+- Verify network connectivity between clusters
+- Check credentials and permissions
+- Ensure sufficient storage capacity
+
+OPERATOR DELETION
+
+If you need to remove an operator from source cluster:
+
+1. Delete all custom resources first:
+   - Databases, clusters, etc.
+   - Let operator clean up managed resources
+
+2. Request operator removal from Platform Ops:
+   - Include namespace
+   - Confirm all CRs deleted
+
+LEAD TIMES
+
+| Operator | DEV | UAT/PROD |
+|----------|-----|----------|
+| Redis | 1-2 days | 3-5 days |
+| Couchbase | 1-2 days | 3-5 days |
+| Service Mesh | 1-2 days | 3-5 days |
+| Other | Varies | Varies |
+
+Plan operator installation early in your migration preparation.

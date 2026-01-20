@@ -1,0 +1,105 @@
+VMware to BareMetal OpenShift Migration - Overview
+
+INTRODUCTION
+
+This guide provides an overview of the migration from VMware OpenShift clusters
+to BareMetal OpenShift clusters. This migration modernizes the infrastructure
+by moving from VM-based nodes to physical servers, providing improved performance
+and reduced operational overhead.
+
+WHY MIGRATE?
+
+- Reduce dependency on VMware licensing and infrastructure
+- Improve performance with direct hardware access
+- Simplify operations with fewer virtualization layers
+- Enable newer OpenShift features available on BareMetal
+- Reduce infrastructure costs over time
+- Consolidate to larger-scale clusters
+
+WHAT IS CHANGING?
+
+Source Platform (VMware OpenShift):
+- OpenShift running on vSphere VMs
+- vSphere storage provisioners (thin, thin-csi)
+- NSX networking for load balancing
+- VM-based worker and infrastructure nodes
+
+Destination Platform (BareMetal OpenShift):
+- OpenShift running on physical servers
+- Dell CSM or NetApp ONTAP storage provisioners
+- Standard load balancing with VIPs
+- Physical worker and infrastructure nodes
+
+MIGRATION TIMELINE
+
+The migration proceeds in phases:
+
+- DEV Phase: Development environments migrate first
+- UAT Phase: User acceptance testing environments follow
+- PROD Wave 1: Critical production applications
+- PROD Wave 2: Standard production applications  
+- PROD Wave 3: Remaining production applications
+
+Each phase has a defined window. Teams must complete their migration within
+their assigned window.
+
+WHAT PLATFORM OPS HANDLES AUTOMATICALLY
+
+Before your migration window, Platform Ops will:
+
+1. Copy your project and namespace to the destination cluster
+2. Copy essential resources:
+   - Quotas and limits
+   - Service accounts
+   - Role bindings
+   - Secrets (native)
+   - Network policies
+   - EgressIP configuration
+   - Persistent volumes and claims
+3. Configure custom netgroups for your application nodes
+4. Create firewall rules for internet-bound EgressIP traffic
+
+Note: Resources deployed via CD pipelines are intentionally NOT copied.
+Application teams must redeploy these through their CD pipeline.
+
+WHAT YOUR TEAM MUST DO
+
+Application teams are responsible for:
+
+1. Prerequisites (before migration window):
+   - Identify internal system connections needing firewall updates
+   - Consider implementing a Vanity URL
+   - Request new certificates if using cluster-based routes
+   - Configure SSO for the new cluster
+
+2. During migration window:
+   - Update CD pipeline configuration
+   - Deploy application to destination cluster
+   - Update storage class references if using dynamic storage
+
+3. Post-migration:
+   - Validate application functionality
+   - Perform checkout testing
+   - Delete project from source cluster after validation
+
+KEY INFRASTRUCTURE CHANGES
+
+EgressIP: Your application will have NEW EgressIP addresses on the destination
+cluster. Any firewall rules for internal systems must be updated with these
+new IPs.
+
+Storage Classes: VMware storage classes (thin, thin-csi) are not available
+on BareMetal. Update your PVC definitions to use dell-csm-sc or sc-ontap-nas.
+
+VIP and Routes: The cluster VIP and wildcard DNS are different. If using
+cluster-based routes in certificates or SSO, these must be updated.
+
+Proxy Ports: The proxy port changes from 9999/7777 to 17777 on BareMetal.
+Update your application configuration accordingly.
+
+GETTING HELP
+
+For questions or issues during migration:
+- Raise an incident ticket with the migration template
+- Contact the Platform Operations team
+- Reference the detailed guides for each migration step

@@ -1,0 +1,150 @@
+CD Tool Type C - Release Management Tool Migration Guide
+
+OVERVIEW
+
+This guide covers migration steps for applications using the Release
+Management Tool (CD Tool Type C). This enterprise release management
+platform requires a service request to update cluster configuration.
+
+PREREQUISITES
+
+Before starting:
+- Access to the Release Management Portal
+- Your application's identifier
+- Destination cluster name and API endpoint
+- Service request portal access
+
+STEP 1: RAISE MODIFICATION REQUEST
+
+Unlike other CD tools, Release Management Tool requires a formal service
+request to update cluster configuration.
+
+1. Navigate to the Service Request Portal
+2. Select "Release Lifecycle Management" category
+3. Choose "Modification to an existing configuration"
+4. This initiates the onboarding template update process
+
+STEP 2: COMPLETE REQUEST FORM
+
+Fill in the required fields:
+
+1. Application Information:
+   - Application ID
+   - Application Name
+   - Contact Information
+
+2. Change Type:
+   - Select "Modification to an existing RLM application configuration"
+
+3. Environment Details:
+   - Current cluster (VMware)
+   - Destination cluster (BareMetal)
+
+4. Justification:
+   - Reference the migration program
+   - Include your migration phase and timeline
+
+STEP 3: UPDATE ONBOARDING TEMPLATE
+
+Download and update the RLM Onboarding Template:
+
+1. Download the template from the service request
+2. Open the "OPENSHIFT" tab in the template
+
+3. Update the following fields:
+
+   OPENSHIFT_HOST:
+   - Format: api.<cluster-name>.example.internal:6443
+   - Replace <cluster-name> with your BareMetal destination cluster name
+
+   OPENSHIFT_URL:
+   - Format: https://api.<cluster-name>.example.internal:6443
+   - Replace <cluster-name> with your BareMetal destination cluster name
+
+   OPENSHIFT_HOME:
+   - Typically: /opt/oseclient/v3.7/bin
+   - This value is standard for all applications
+
+4. Complete any other required fields in the template
+
+5. Upload the updated template to the service request
+
+STEP 4: SUBMIT AND TRACK REQUEST
+
+1. Submit the service request
+2. Note the request/ticket number
+3. Track progress in the service request portal
+4. Approval workflow:
+   - Manager approval
+   - Application owner approval
+   - Platform team processing
+
+STEP 5: VALIDATE CONFIGURATION
+
+Once the request is completed:
+
+1. Login to Release Management Portal
+2. Navigate to your application
+3. Verify the new cluster configuration appears
+4. Check connection status shows healthy
+
+STEP 6: UPDATE DEPLOYMENT CONFIGURATION
+
+After RLM configuration is updated:
+
+1. Review deployment templates for cluster-specific values
+2. Update storage class references:
+   - From: thin, thin-csi
+   - To: sc-ontap-nas or dell-csm-sc
+
+3. Update any hardcoded cluster references:
+   - Route hostnames
+   - API endpoints
+   - Configuration URLs
+
+STEP 7: EXECUTE DEPLOYMENT
+
+1. Initiate deployment through Release Management Tool
+2. Select the new BareMetal cluster environment
+3. Follow standard release workflow
+4. Monitor deployment progress
+
+STEP 8: VALIDATE DEPLOYMENT
+
+1. Verify deployment completed successfully
+2. Check all pods are running
+3. Validate service endpoints
+4. Test application functionality
+
+TROUBLESHOOTING
+
+Issue: Configuration update request rejected
+Solution: Ensure all required fields are completed. Check that the
+          destination cluster name is correct and cluster exists.
+
+Issue: Connection test fails
+Solution: Verify API endpoint format is correct. Check network
+          connectivity from Release Management platform to cluster.
+
+Issue: Deployment fails with authentication error
+Solution: Service account credentials may need refresh. Contact
+          Platform Ops to verify service account setup.
+
+Issue: Cluster not visible after request completion
+Solution: Configuration propagation may take 15-30 minutes. Refresh
+          the portal and check again.
+
+RLM SPECIFIC NOTES
+
+- RLM requires service requests for any cluster configuration change
+- Plan for request processing time (typically 3-5 business days)
+- Keep request templates for audit purposes
+- Consider this lead time in your migration planning
+
+NEXT STEPS
+
+After successful deployment:
+1. Complete application validation checklist
+2. Update any external references to the application
+3. Coordinate DNS cutover if applicable
+4. Schedule source environment cleanup

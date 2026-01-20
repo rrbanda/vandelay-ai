@@ -2,8 +2,16 @@
 GraphRAG Orchestrator (Retriever Router)
 ==========================================
 
-Root orchestrator that implements the AGENTIC RAG pattern.
+Root orchestrator that implements AGENTIC RAG with GraphRAG patterns.
 ALL configuration loaded from config.yaml - NO hardcoding.
+
+GraphRAG Patterns Implemented (per Neo4j GraphRAG Pattern Catalog):
+- Cypher Templates: Pre-defined queries in graph_query tools
+- Graph-Enhanced Vector Search: vector_search_with_graph_context()
+- Basic Retriever: Direct graph traversal tools
+- Pattern Matching: Cypher MATCH patterns throughout
+
+Reference: https://graphrag.com/concepts/intro-to-graphrag/
 
 Three Foundational Components:
 1. RETRIEVER ROUTER: This orchestrator - routes to appropriate retrievers

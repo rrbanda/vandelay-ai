@@ -1,0 +1,5 @@
+storage_class_id,name,provisioner,platform,is_default,notes
+SC-THIN,thin,kubernetes.io/vsphere-volume,source,false,Legacy vSphere storage - not available on BareMetal
+SC-THIN-CSI,thin-csi,csi.vsphere.vmware.com,source,true,vSphere CSI driver - not available on BareMetal
+SC-DELL-CSM,dell-csm-sc,csi-vxflexos.dellemc.com,destination,false,Dell CSM storage for BareMetal clusters
+SC-ONTAP-NAS,sc-ontap-nas,csi.trident.netapp.io,destination,true,NetApp ONTAP NAS storage - default for BareMetal

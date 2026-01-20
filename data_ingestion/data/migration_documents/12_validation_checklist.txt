@@ -1,0 +1,231 @@
+Application Validation and Checkout Checklist
+
+OVERVIEW
+
+This checklist guides you through validating your application after
+migrating to BareMetal OpenShift. Complete all applicable items before
+considering the migration successful.
+
+WHEN TO VALIDATE
+
+- After deploying application to destination cluster
+- Before declaring migration complete
+- Before deleting source cluster resources
+
+PRE-VALIDATION CHECKS
+
+Before starting validation, confirm:
+
+[ ] Application deployed to BareMetal cluster
+[ ] All pods are running (no CrashLoopBackOff or Error states)
+[ ] Services are created and have endpoints
+[ ] Routes are accessible
+[ ] Any required operators are installed and running
+
+SECTION 1: INFRASTRUCTURE VALIDATION
+
+Pod Status:
+[ ] All expected pods are running
+[ ] Pod count matches expected replicas
+[ ] No pods in Pending, Error, or CrashLoopBackOff state
+[ ] Resource requests and limits are applied correctly
+
+Service Endpoints:
+[ ] Services have endpoints (not empty)
+[ ] Endpoint IPs match pod IPs
+[ ] Port mappings are correct
+
+Routes/Ingress:
+[ ] Routes are created
+[ ] Route hostnames are correct (Vanity URL or cluster route)
+[ ] TLS termination is configured correctly
+[ ] Routes are accessible externally (if applicable)
+
+Storage:
+[ ] PersistentVolumeClaims are bound
+[ ] Correct storage class is used (sc-ontap-nas or dell-csm-sc)
+[ ] Data is accessible from pods
+[ ] Write operations work correctly
+
+SECTION 2: APPLICATION HEALTH
+
+Health Endpoints:
+[ ] Liveness probe endpoints responding
+[ ] Readiness probe endpoints responding
+[ ] Health check returns expected status
+
+Application Logs:
+[ ] No critical errors in application logs
+[ ] No repeated warning messages
+[ ] Startup sequence completes successfully
+[ ] Application reports "ready" state
+
+Metrics:
+[ ] Metrics endpoints accessible (if applicable)
+[ ] Key metrics are being collected
+[ ] No anomalies in metric values
+
+SECTION 3: CONNECTIVITY VALIDATION
+
+Inbound Connectivity:
+[ ] Application accessible via route/ingress
+[ ] Load balancing working (if multiple replicas)
+[ ] SSL/TLS working correctly
+[ ] Authentication working (if applicable)
+
+Outbound Connectivity - Internal Systems:
+[ ] Database connections successful
+[ ] Message queue connections working
+[ ] SFTP/file transfer connections working
+[ ] Internal API calls succeeding
+[ ] Mainframe connections working (if applicable)
+
+Outbound Connectivity - External:
+[ ] External API calls working
+[ ] Proxy configuration correct (port 17777)
+[ ] No firewall blocks for internet traffic
+
+Inter-Service Communication:
+[ ] Communication with other services in namespace
+[ ] Communication with services in other namespaces
+[ ] Service mesh routing (if applicable)
+
+SECTION 4: SECURITY VALIDATION
+
+Authentication:
+[ ] SSO login working
+[ ] Session management functioning
+[ ] Logout working correctly
+[ ] Token refresh working (if applicable)
+
+Authorization:
+[ ] User roles correctly applied
+[ ] Permission checks working
+[ ] Access denied for unauthorized operations
+
+Secrets:
+[ ] All secrets accessible
+[ ] Secret values correct
+[ ] No secret-related errors in logs
+
+Certificates:
+[ ] TLS certificate valid
+[ ] Certificate chain complete
+[ ] No SSL/TLS warnings
+
+SECTION 5: FUNCTIONAL VALIDATION
+
+Core Functionality:
+[ ] Primary use cases working
+[ ] Critical business operations successful
+[ ] Data displayed correctly
+[ ] User workflows complete successfully
+
+Integrations:
+[ ] All integrated systems connected
+[ ] Data flowing correctly between systems
+[ ] Async operations completing (queues, events)
+[ ] Batch processes running (if applicable)
+
+Data Integrity:
+[ ] Existing data accessible
+[ ] New data can be created
+[ ] Data updates working
+[ ] Data deletion working
+[ ] No data corruption
+
+SECTION 6: PERFORMANCE VALIDATION
+
+Response Times:
+[ ] API response times within SLA
+[ ] Page load times acceptable
+[ ] No timeout errors
+[ ] Performance comparable to source cluster
+
+Resource Utilization:
+[ ] CPU usage within expected range
+[ ] Memory usage within limits
+[ ] No memory leaks observed
+[ ] Storage I/O acceptable
+
+Load Handling:
+[ ] Application handles normal load
+[ ] Scaling working correctly (HPA if configured)
+[ ] No degradation under load
+
+SECTION 7: MONITORING AND ALERTING
+
+Observability:
+[ ] Logs flowing to central logging system
+[ ] Metrics being collected by monitoring system
+[ ] Traces working (if using distributed tracing)
+[ ] Dashboards showing data
+
+Alerts:
+[ ] Alert rules configured for new cluster
+[ ] Test alerts firing correctly
+[ ] Alert notifications received
+[ ] Runbooks updated with new cluster details
+
+SECTION 8: DOCUMENTATION
+
+Updates Required:
+[ ] Runbooks updated with BareMetal cluster details
+[ ] Architecture diagrams updated
+[ ] Network diagrams updated (new IPs, routes)
+[ ] Disaster recovery procedures updated
+[ ] On-call documentation updated
+
+VALIDATION SIGN-OFF
+
+After completing validation:
+
+[ ] All critical checks passed
+[ ] Known issues documented with mitigation
+[ ] Stakeholders notified of successful migration
+[ ] Validation results documented
+
+ISSUES DURING VALIDATION
+
+If issues are found:
+
+1. Document the issue:
+   - What is failing?
+   - Error messages observed
+   - Steps to reproduce
+
+2. Categorize severity:
+   - Critical: Blocks business operations
+   - High: Significant impact, workaround exists
+   - Medium: Limited impact
+   - Low: Minor issue
+
+3. Determine action:
+   - Fix before proceeding
+   - Document and monitor
+   - Accept risk
+
+4. For critical issues:
+   - Consider rollback to source cluster
+   - Raise incident ticket with migration template
+   - Contact Platform Operations team
+
+POST-VALIDATION
+
+After successful validation:
+
+1. Run in parallel (if applicable):
+   - Monitor both clusters for comparison
+   - Identify any discrepancies
+
+2. Plan DNS cutover (if not done):
+   - Schedule cutover window
+   - Communicate to stakeholders
+
+3. Monitor closely:
+   - Enhanced monitoring for 24-48 hours
+   - Quick response to any issues
+
+4. Schedule cleanup:
+   - Plan source cluster resource deletion
+   - Document cleanup procedure

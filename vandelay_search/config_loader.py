@@ -142,7 +142,8 @@ def get_vector_store_config(config: Dict = None) -> Dict[str, Any]:
     Get LlamaStack Vector Store configuration with environment variable overrides.
     
     Returns:
-        Dict with base_url, vector_store_id, embedding_model, verify_ssl, etc.
+        Dict with base_url, vector_store_id, embedding_model, verify_ssl,
+        search_mode, ranker_type, ranking_alpha, etc.
     """
     if config is None:
         config = load_config()
@@ -159,6 +160,20 @@ def get_vector_store_config(config: Dict = None) -> Dict[str, Any]:
     else:
         verify_ssl = vs.get('verify_ssl', True)
     
+    # Handle search_mode: defaults to 'vector' for backward compatibility
+    # Options: 'vector', 'keyword', 'hybrid'
+    search_mode = os.environ.get('VECTOR_STORE_SEARCH_MODE', vs.get('search_mode', 'vector'))
+    if search_mode not in ('vector', 'keyword', 'hybrid'):
+        search_mode = 'vector'
+    
+    # Handle ranking_alpha: weight for vector vs keyword in hybrid search
+    # 0.0 = pure keyword, 1.0 = pure vector, 0.7 = 70% vector / 30% keyword
+    try:
+        ranking_alpha = float(os.environ.get('VECTOR_STORE_RANKING_ALPHA', vs.get('ranking_alpha', 0.7)))
+        ranking_alpha = max(0.0, min(1.0, ranking_alpha))  # Clamp to 0-1
+    except (ValueError, TypeError):
+        ranking_alpha = 0.7
+    
     return {
         'provider': vs.get('provider', 'llamastack'),
         'base_url': os.environ.get('LLAMASTACK_BASE_URL', vs.get('base_url', '')),
@@ -168,6 +183,10 @@ def get_vector_store_config(config: Dict = None) -> Dict[str, Any]:
         'embedding_dimension': vs.get('embedding_dimension', 384),
         'similarity_top_k': vs.get('similarity_top_k', 5),
         'verify_ssl': verify_ssl,
+        # Hybrid search options
+        'search_mode': search_mode,
+        'ranker_type': vs.get('ranker_type', 'weighted'),
+        'ranking_alpha': ranking_alpha,
     }
 
 
@@ -406,3 +425,40 @@ def get_memory_settings(config: Dict = None) -> Dict[str, Any]:
         'preload_memories': settings.get('preload_memories', True),
         'max_memories_per_query': settings.get('max_memories_per_query', 5),
     }
+
+
+# =============================================================================
+# GraphRAG Configuration
+# =============================================================================
+
+def get_graphrag_config(config: Dict = None) -> Dict[str, Any]:
+    """
+    Get GraphRAG (hybrid vector-graph retrieval) configuration.
+    
+    Returns:
+        Dict with enable_graph_context, max_entity_lookups, 
+        max_connections_per_entity, entity_patterns
+    """
+    if config is None:
+        config = load_config()
+    
+    graphrag = config.get('graphrag', {})
+    
+    return {
+        'enable_graph_context': graphrag.get('enable_graph_context', True),
+        'max_entity_lookups': graphrag.get('max_entity_lookups', 10),
+        'max_connections_per_entity': graphrag.get('max_connections_per_entity', 5),
+        'entity_patterns': graphrag.get('entity_patterns', {}),
+    }
+
+
+def get_entity_patterns(config: Dict = None) -> Dict[str, list]:
+    """
+    Get entity patterns for GraphRAG entity extraction.
+    
+    Returns:
+        Dict mapping category -> list of patterns
+        e.g., {'products': ['checking', 'savings', ...], 'regulations': ['basel iii', ...]}
+    """
+    graphrag_config = get_graphrag_config(config)
+    return graphrag_config.get('entity_patterns', {})

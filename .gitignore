@@ -36,8 +36,9 @@ env/
 secrets.yaml
 *-secrets.yaml
 
-# Local stack with secrets (use template instead)
+# Local stack with secrets (use templates instead)
 openshift/local-stack.yaml
+openshift/*-local-stack.yaml
 
 # ADK local data
 .adk/

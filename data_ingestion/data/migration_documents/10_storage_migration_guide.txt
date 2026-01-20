@@ -1,0 +1,220 @@
+Storage Migration Guide
+
+OVERVIEW
+
+This guide covers storage-related changes when migrating from VMware
+OpenShift to BareMetal OpenShift. Storage classes are different between
+platforms, requiring updates to your PersistentVolumeClaim configurations.
+
+KEY CHANGE: VMware storage classes are not available on BareMetal.
+
+STORAGE CLASSES
+
+VMware OpenShift Storage Classes (SOURCE):
+
+1. thin
+   - Provisioner: kubernetes.io/vsphere-volume
+   - Legacy vSphere storage
+   - NOT available on BareMetal
+
+2. thin-csi (often default)
+   - Provisioner: csi.vsphere.vmware.com
+   - vSphere CSI driver
+   - NOT available on BareMetal
+
+BareMetal OpenShift Storage Classes (DESTINATION):
+
+1. sc-ontap-nas (default)
+   - Provisioner: csi.trident.netapp.io
+   - NetApp ONTAP NAS storage
+   - Recommended for most workloads
+
+2. dell-csm-sc
+   - Provisioner: csi-vxflexos.dellemc.com
+   - Dell CSM storage
+   - Alternative option
+
+WHAT GETS MIGRATED
+
+Automatically Migrated by Platform Ops:
+- PersistentVolumeClaims (PVC definitions)
+- PersistentVolumes (PV definitions)
+
+NOT Migrated (requires action):
+- Actual data on dynamic VMware storage
+- Operator-provisioned storage (Redis, Couchbase, etc.)
+- Storage class references in your manifests
+
+UPDATING STORAGE CLASS REFERENCES
+
+Step 1: Identify PVCs in Your Namespace
+
+List all PersistentVolumeClaims and note their storage classes:
+- Check your deployment manifests
+- Check any StatefulSet configurations
+- Check operator configurations (Redis, databases, etc.)
+
+Step 2: Update Manifests
+
+Change storage class references in all manifests:
+
+Before (VMware):
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-app-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: thin-csi  # VMware storage
+```
+
+After (BareMetal):
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-app-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: sc-ontap-nas  # BareMetal storage
+```
+
+Step 3: Update Operator Configurations
+
+For Redis, Couchbase, or other operators, update the persistentSpec:
+
+Before:
+```yaml
+persistentSpec:
+  enabled: true
+  storageClassName: thin
+  volumeSize: 25Gi
+```
+
+After:
+```yaml
+persistentSpec:
+  enabled: true
+  storageClassName: sc-ontap-nas  # or dell-csm-sc
+  volumeSize: 25Gi
+```
+
+DYNAMIC STORAGE MIGRATION
+
+Important: Dynamic storage from VMware cannot be directly used on BareMetal.
+
+For applications with dynamic storage:
+
+1. Stateless applications:
+   - Simply redeploy with new storage class
+   - No data migration needed
+
+2. Stateful applications:
+   - Data must be migrated separately
+   - Options:
+     a. Backup/restore (recommended)
+     b. Application-level replication
+     c. Export/import procedures
+
+3. Operator-managed storage (Redis, Couchbase, databases):
+   - Redeploy the operator resources on destination
+   - Use application-level data migration
+   - Coordinate with database/caching team
+
+DATA MIGRATION STRATEGIES
+
+Strategy 1: Backup and Restore
+
+1. Take backup of data on VMware cluster
+2. Store backup in accessible location (S3, NFS)
+3. Deploy application on BareMetal with new storage
+4. Restore data from backup
+
+Best for: Databases, structured data
+
+Strategy 2: Application-Level Replication
+
+1. Set up replication between VMware and BareMetal instances
+2. Allow data to synchronize
+3. Cutover to BareMetal as primary
+4. Decommission VMware instance
+
+Best for: Databases with built-in replication, Redis clusters
+
+Strategy 3: Export/Import
+
+1. Export data to portable format
+2. Transfer to accessible location
+3. Import into BareMetal instance
+
+Best for: Smaller datasets, batch data
+
+OPERATOR-SPECIFIC GUIDANCE
+
+Redis Operator:
+
+1. New operator installation required on BareMetal
+2. Platform Ops can install operator via ticket
+3. Create new Redis cluster with BareMetal storage class
+4. Migrate data using Redis replication or backup
+
+Couchbase Operator:
+
+1. New operator installation required
+2. Update cluster YAML with new storage class
+3. Create new Couchbase cluster
+4. Use XDCR for data replication or backup/restore
+
+Other Operators:
+
+1. Contact Platform Ops for operator installation
+2. Review operator documentation for migration guidance
+3. Plan data migration based on application requirements
+
+STORAGE CAPACITY
+
+Verify storage capacity on BareMetal:
+
+1. Check quota and limits in destination namespace
+2. Verify requested storage size is within limits
+3. Request quota increase if needed before migration
+
+Default limits may differ between environments.
+
+TROUBLESHOOTING
+
+Issue: PVC stuck in Pending state
+Cause: Storage class doesn't exist or is incorrect
+Solution: Verify storage class name is exactly "sc-ontap-nas" or "dell-csm-sc"
+
+Issue: PVC created but pod can't mount volume
+Cause: Volume binding mode or access mode mismatch
+Solution: Check access modes match between PVC and pod specification
+
+Issue: "No persistent volumes available" error
+Cause: Storage quota exceeded or provisioner issue
+Solution: Check namespace quota; contact Platform Ops if provisioner issue
+
+Issue: Performance degradation after migration
+Cause: Different storage characteristics
+Solution: Work with storage team to tune performance; consider storage tier
+
+CHECKLIST
+
+[ ] Identify all PVCs in your namespace
+[ ] Document current storage classes used
+[ ] Update all manifests with new storage class names
+[ ] Plan data migration strategy for stateful components
+[ ] Coordinate operator redeployment with Platform Ops
+[ ] Verify storage quota on destination cluster
+[ ] Test storage provisioning in DEV before PROD
+[ ] Validate data integrity after migration

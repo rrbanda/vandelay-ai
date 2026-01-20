@@ -1,0 +1,248 @@
+Vanity URL Guide
+
+OVERVIEW
+
+This guide covers Vanity URL configuration for VMware to BareMetal OpenShift
+migration. Vanity URLs are strongly recommended as they simplify migrations
+and improve application access patterns.
+
+WHAT IS A VANITY URL?
+
+A Vanity URL is a custom, friendly URL for your application that is:
+- Independent of cluster infrastructure
+- Consistent across migrations
+- Easier for users to remember
+
+Examples:
+- payments.vandelay.com (branded)
+- payments-api.internal.company.net (non-branded)
+
+vs. Cluster-based routes:
+- payments-api.apps.vmware-east-dev.example.internal
+
+BENEFITS OF VANITY URLS
+
+1. No URL changes during migration
+   - Users continue using same URL
+   - No application configuration changes
+   - Bookmarks and integrations keep working
+
+2. Simpler certificate management
+   - Certificate SAN only needs Vanity URL
+   - No certificate changes during migration
+
+3. Simpler SSO configuration
+   - Base URL stays the same
+   - No SSO policy modifications needed
+
+4. Easier future migrations
+   - Just update DNS/VIP mapping
+   - Application and clients unchanged
+
+RECOMMENDATION: Implement a Vanity URL if you don't have one.
+
+VANITY URL TYPES
+
+Branded Vanity URL:
+- Ends in company domain (e.g., .company.com, .company.net)
+- Requires registration in DNS registry
+- Two-step process: Register then map
+
+Non-Branded Vanity URL:
+- Ends in internal domain (e.g., .internal.company.net)
+- No explicit registration needed
+- Single-step process: Just map to VIP
+
+ENDPOINT OPTIONS
+
+Your Vanity URL can point to different endpoints:
+
+Option 1: Cluster VIP (Recommended)
+
+- Direct routing to cluster infrastructure nodes
+- No additional infrastructure required
+- Suitable for most applications
+- Request flow: Vanity URL → Cluster VIP → Infra Node → Router → Service → Pod
+
+Option 2: Application VIP (Special cases only)
+
+- Separate VIP for your application
+- Required only for:
+  - Ingress whitelisting
+  - SSL termination at load balancer
+  - X-Forwarding headers
+  - Custom timeout requirements
+- Requires exception approval from Platform Ops
+
+Option 3: Wide IP (WIP) - Production
+
+- DNS-based load balancing
+- Routes to PROD with failover to DR
+- Infra nodes as direct members
+- For production high availability
+
+CREATING A VANITY URL
+
+Non-Branded Vanity URL (Simpler):
+
+Step 1: No registration needed
+
+Step 2: Map URL to Cluster VIP
+
+1. Navigate to DNS Management Portal
+2. Select "Add, Modify, or Delete Objects"
+3. Select "Modify"
+4. Enter details:
+   - VIP IP: Cluster VIP IP address (from cluster configuration)
+   - Alias to add: your-app.internal.company.net
+   - Justification: Application access for BareMetal migration
+
+5. Submit request
+6. Approval: Manager approval required
+7. Processing: Typically immediate after approval
+
+Branded Vanity URL (Two steps):
+
+Step 1: Register the URL
+
+1. Navigate to Service Request Portal
+2. Select "Intranet Fully Qualified Domain Name Request"
+3. Fill in:
+   - Requested FQDN: your-app.company.com
+   - Application ID
+   - Business justification
+
+4. Submit and wait for approval
+5. SLA: Approximately 5 business days
+
+Step 2: Map URL to Cluster VIP
+
+1. Navigate to DNS Management Portal
+2. Select "Add Domain DNS Entries"
+3. Select "Add CDNR Branded Alias"
+4. Enter details:
+   - Target FQDN: Cluster VIP name (from cluster configuration)
+   - CDNR name: your-app (without domain)
+   - Domain: Select your company domain
+
+5. Submit request
+6. Processing: After approval
+
+MODIFYING EXISTING VANITY URL
+
+If you already have a Vanity URL pointing to VMware cluster:
+
+For Non-Branded URL:
+
+1. Navigate to DNS Management Portal
+2. Select "Move/Transfer/Swap Object and Alias"
+3. Choose "Alias Move"
+4. Fill in:
+   - Starting object FQDN: Current VIP or wildcard DNS
+   - Starting object IP: Current IP address
+   - Starting object alias: Your Vanity URL
+   - Destination object FQDN: New cluster VIP name
+   - Destination object IP: New cluster VIP IP
+
+5. Choose execution time:
+   - "Execute Now" for immediate (if no live traffic)
+   - Schedule future time for production cutover
+
+6. Submit request
+7. Processing: 15-20 minutes after approval
+
+For Branded URL:
+
+1. Navigate to DNS Management Portal
+2. Select "General Request"
+3. Choose "Vandelay.net Change" (or appropriate category)
+4. Describe the change:
+   - Current mapping
+   - New mapping (BareMetal cluster VIP)
+   - Justification
+
+5. Submit and track request
+
+PRODUCTION/DR CONFIGURATION
+
+For production with disaster recovery:
+
+1. Create Wide IP (WIP) with:
+   - PROD infra nodes as primary members
+   - DR infra nodes as failover members
+   - Round-robin within PROD
+   - Failover to DR if PROD unavailable
+
+2. Point Vanity URL to WIP
+
+Options for WIP creation:
+- Through Enterprise CD Platform (if available)
+- Through Load Balancer as a Service API
+- Through Network Automation Portal (requires exception)
+
+TROUBLESHOOTING
+
+Issue: Vanity URL not resolving
+Possible causes:
+- DNS not propagated
+- Mapping not complete
+
+Solution:
+- Allow 15-30 minutes for propagation
+- Verify mapping was approved and processed
+- Use nslookup to check resolution
+
+Issue: Vanity URL resolves but connection fails
+Possible causes:
+- VIP not configured correctly
+- Infra nodes not healthy
+- Route not created in OpenShift
+
+Solution:
+- Verify VIP is reachable
+- Check route exists in namespace
+- Verify route hostname matches Vanity URL
+
+Issue: Intermittent connectivity via Vanity URL
+Possible causes:
+- DNS caching issues
+- VIP member health issues
+
+Solution:
+- Wait for DNS cache expiration
+- Check all infra node members are healthy
+
+CUTOVER TIMING
+
+For production migrations:
+
+1. Test in DEV first:
+   - Verify Vanity URL works with BareMetal
+   - Identify any issues
+
+2. Plan cutover window:
+   - Low-traffic period preferred
+   - DNS changes take 15-20 minutes
+   - Have rollback plan ready
+
+3. Execute cutover:
+   - Update DNS mapping to new VIP
+   - Monitor for errors
+   - Validate application functionality
+
+4. Post-cutover:
+   - Monitor for 24-48 hours
+   - Address any DNS caching issues
+   - Update documentation
+
+CHECKLIST
+
+[ ] Decide if implementing new Vanity URL
+[ ] Choose URL type (branded vs non-branded)
+[ ] Get destination cluster VIP from configuration
+[ ] Register URL if branded (5 day lead time)
+[ ] Create or modify DNS mapping
+[ ] Test URL resolution
+[ ] Plan production cutover timing
+[ ] Execute cutover during migration window
+[ ] Validate post-cutover

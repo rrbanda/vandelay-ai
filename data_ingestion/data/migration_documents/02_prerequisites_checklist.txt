@@ -1,0 +1,128 @@
+Migration Prerequisites Checklist
+
+BEFORE YOUR MIGRATION WINDOW
+
+Complete these items before your scheduled migration window begins.
+Allow sufficient lead time for items requiring service requests.
+
+SECTION 1: IDENTIFY YOUR MIGRATION PATH
+
+[ ] Confirm your source cluster (VMware OpenShift cluster name)
+[ ] Confirm your destination cluster (BareMetal OpenShift cluster name)
+[ ] Note your migration phase (DEV, UAT, or PROD wave)
+[ ] Note your migration window dates
+
+SECTION 2: NETWORK CONNECTIVITY (Lead time: 14 days)
+
+[ ] Identify all internal systems your application connects to:
+    - Databases
+    - SFTP servers
+    - Message queues (MQ)
+    - Mainframe systems
+    - Internal APIs
+    - Monitoring systems
+
+[ ] For each internal system:
+    - Document the destination hostname/IP and port
+    - Document the protocol (TCP/UDP)
+    - Confirm the current EgressIP is whitelisted
+
+[ ] Get your new destination EgressIP from the cluster configuration
+[ ] Submit firewall requests for all internal system connections
+    Note: Internet-bound rules are handled automatically by Platform Ops
+
+SECTION 3: VANITY URL (Lead time: 7 days)
+
+[ ] Evaluate if you can implement a Vanity URL
+    Benefits:
+    - No URL changes during future migrations
+    - Consistent access pattern for users
+    - Easier certificate management
+
+[ ] If creating new Vanity URL:
+    - Submit DNS registration request (branded) or
+    - Configure via DNS management portal (non-branded)
+    - Map Vanity URL to destination cluster VIP
+
+[ ] If using existing Vanity URL:
+    - Plan cutover to point to new cluster VIP
+
+SECTION 4: CERTIFICATES (Lead time: 7 days)
+
+[ ] Review your current certificate's Subject Alternative Name (SAN) list
+
+[ ] If ONLY Vanity URLs in SAN:
+    - No action needed
+    - Existing certificate will work
+
+[ ] If cluster-based routes in SAN (e.g., apps.vmware-cluster.example.com):
+    - Request new certificate with updated SAN list
+    - Include destination cluster route patterns
+    - Update deployment configuration with new certificate reference
+
+SECTION 5: SSO CONFIGURATION (Lead time: 7 days)
+
+[ ] Identify your SSO provider (Modern SSO or Legacy SSO)
+
+[ ] Get the SSO registration hostname for your destination cluster
+    (Available in cluster configuration)
+
+[ ] If using Vanity URL:
+    - No base URL changes needed
+    - Still need to register with new SSO host
+
+[ ] If using cluster-based route URL:
+    - Submit SSO modification request to update base URL
+    - Update SSO_REGHOST_HOSTNAME in your application config
+
+SECTION 6: STORAGE (No service request needed)
+
+[ ] Identify all PersistentVolumeClaims in your namespace
+[ ] Note current storage classes used:
+    - thin (vSphere legacy)
+    - thin-csi (vSphere CSI)
+
+[ ] Plan updates to use destination storage classes:
+    - dell-csm-sc (Dell CSM)
+    - sc-ontap-nas (NetApp ONTAP - default)
+
+[ ] For applications using operators (Redis, Couchbase, etc.):
+    - Plan to redeploy operator resources on destination
+    - Dynamic storage cannot be migrated; will be reprovisioned
+
+SECTION 7: CD PIPELINE
+
+[ ] Identify your CD tool:
+    - Enterprise CD Platform (Type A)
+    - Legacy CD Platform (Type B)
+    - Release Management Tool (Type C)
+
+[ ] Review CD tool-specific migration guide for your tool
+[ ] Plan pipeline updates for destination cluster
+
+SECTION 8: OPERATORS (Lead time: varies)
+
+If your application uses any of these operators, submit a ticket to
+Platform Ops for installation on destination cluster:
+
+[ ] Redis operator
+[ ] Couchbase operator
+[ ] Service Mesh
+[ ] Other operators (specify in ticket)
+
+SECTION 9: FINAL CHECKS
+
+[ ] All service requests submitted with sufficient lead time
+[ ] Team aware of migration window dates
+[ ] Rollback plan documented
+[ ] Validation test plan prepared
+[ ] Communication plan for stakeholders
+
+READY FOR MIGRATION
+
+Once all prerequisites are complete, you are ready for your migration window.
+During the window, you will:
+1. Update and run your CD pipeline for destination cluster
+2. Validate application functionality
+3. Perform cutover (if using Vanity URL)
+4. Complete checkout testing
