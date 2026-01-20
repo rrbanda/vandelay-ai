@@ -1,0 +1,205 @@
+SSO Configuration Guide
+
+OVERVIEW
+
+This guide covers Single Sign-On (SSO) configuration changes required when
+migrating from VMware OpenShift to BareMetal OpenShift. SSO configuration
+depends on whether you use Modern SSO Provider or Legacy SSO Provider.
+
+SSO PROVIDERS
+
+Modern SSO Provider:
+- Current standard SSO platform
+- Supports modern protocols
+- Recommended for new implementations
+
+Legacy SSO Provider:
+- Traditional SSO platform
+- Shared secret based authentication
+- Migration to Modern SSO recommended when possible
+
+DETERMINE YOUR SSO TYPE
+
+Check your application configuration for:
+- SSO_REGHOST_HOSTNAME environment variable
+- SSO-related secrets in your namespace
+- Application authentication documentation
+
+MODERN SSO PROVIDER CONFIGURATION
+
+SCENARIO 1: Using Vanity URL
+
+Action Required: NONE (usually)
+
+If you access your application via a Vanity URL:
+- No base URL changes needed
+- Same Vanity URL will be used on new cluster
+- SSO policies remain valid
+
+However, you may still need to:
+- Verify SSO policies include the Vanity URL
+- Confirm routing works after VIP change
+
+SCENARIO 2: Using Cluster-Based Route URL
+
+Action Required: MODIFY SSO POLICY
+
+If your route URL contains the cluster name:
+- Example: app.apps.vmware-east-dev.example.internal
+
+You must update the base URL in your SSO policy:
+
+1. Submit SSO Modification Request:
+   - Navigate to Service Request Portal
+   - Select "SSO Policy Modification" category
+   - Request type: Base URL modification
+
+2. Provide the following information:
+   - Application ID
+   - Current base URL (VMware cluster route)
+   - New base URL (BareMetal cluster route or Vanity URL)
+   - Justification: Migration to BareMetal OpenShift
+
+3. Wait for approval and implementation
+   - Typical SLA: 5-7 business days
+   - Plan this early in your migration timeline
+
+RECOMMENDATION: Create a Vanity URL to avoid base URL changes in
+future migrations.
+
+LEGACY SSO PROVIDER CONFIGURATION
+
+If using Legacy SSO Provider, you have additional configuration steps.
+
+SHARED SECRET CONFIGURATION
+
+Legacy SSO uses shared secrets for authentication. Platform Ops handles
+the shared secret configuration for each cluster.
+
+For your application:
+
+1. Inform Platform Ops:
+   - Contact Platform Ops team
+   - Notify them your application uses Legacy SSO
+   - They will ensure shared secret is configured on destination
+
+2. Update SSO_REGHOST_HOSTNAME:
+   - This environment variable must be updated
+   - Find the new value in cluster configuration
+
+HOW TO FIND SSO_REGHOST_HOSTNAME:
+
+1. Query the cluster configuration for your destination cluster
+2. Look for the sso_reghost_hostname value
+3. Update your application's environment variable
+
+Example values (format, not actual):
+- DEV: sso-east-dev.example.internal
+- UAT: sso-east-uat.example.internal
+- PROD: sso-east-prod.example.internal
+
+UPDATING SSO CONFIGURATION
+
+Step 1: Get destination SSO hostname
+
+Query the migration assistant or check cluster configuration for:
+- Destination cluster name
+- SSO registration hostname for that cluster
+
+Step 2: Update application configuration
+
+In your deployment manifest or CD configuration, update:
+
+Environment variable:
+  SSO_REGHOST_HOSTNAME: <new-value-from-cluster-config>
+
+Step 3: Deploy and verify
+
+After deploying to destination cluster:
+1. Access your application
+2. Attempt SSO login
+3. Verify authentication succeeds
+4. Check for any SSO-related errors in logs
+
+BASE URL MODIFICATION FOR LEGACY SSO
+
+If using cluster-based route (not Vanity URL), also update base URL:
+
+For DEV environment:
+1. Submit modification request via Service Request Portal
+2. Select "Legacy SSO - DEV Modification"
+3. Provide:
+   - Application details
+   - Current base URL
+   - New base URL (destination cluster route or Vanity URL)
+
+For UAT/PROD environments:
+1. Submit promotion request via Service Request Portal
+2. Select "SSO Promotion" request type
+3. Provide same information as above
+
+TROUBLESHOOTING
+
+Issue: SSO login fails with "Access Denied"
+Possible causes:
+- Base URL not updated in SSO policy
+- SSO_REGHOST_HOSTNAME incorrect
+- Shared secret not configured (Legacy SSO)
+
+Solution:
+- Verify SSO policy has correct base URL
+- Check SSO_REGHOST_HOSTNAME value
+- Contact Platform Ops for shared secret status
+
+Issue: SSO redirects to wrong URL
+Possible causes:
+- SSO policy has old cluster URL
+- Multiple policies with conflicting URLs
+
+Solution:
+- Submit SSO modification request
+- Verify only one active policy per application
+
+Issue: Authentication works but authorization fails
+Possible causes:
+- Role mappings not updated
+- Group memberships not synced
+
+Solution:
+- Verify user groups are correctly mapped
+- Check authorization configuration in application
+
+Issue: Intermittent SSO failures
+Possible causes:
+- DNS not fully propagated
+- Load balancing issues
+
+Solution:
+- Wait for DNS propagation (24-48 hours for some changes)
+- Verify VIP is correctly configured
+
+BEST PRACTICES
+
+1. Migrate to Modern SSO Provider:
+   - Reduces configuration complexity
+   - Better security features
+   - Recommended by security team
+
+2. Use Vanity URLs:
+   - Eliminates base URL changes
+   - Simplifies future migrations
+
+3. Test SSO early:
+   - Test in DEV before UAT/PROD
+   - Identify issues early
+
+4. Document SSO dependencies:
+   - Know which SSO provider you use
+   - Keep track of policy configurations
+
+LEAD TIME
+
+SSO configuration changes require:
+- Policy modifications: 5-7 business days
+- Shared secret configuration: Handled during Platform Ops setup
+- Plan SSO changes early in migration preparation

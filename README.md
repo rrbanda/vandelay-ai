@@ -113,6 +113,21 @@ Our AI-First strategy is powered by a growing catalog of specialized agents. Eac
 
 The flagship agent in our platform, **Vandelay Search** demonstrates the power of combining multiple retrieval strategies in a single intelligent assistant. It uses a **multi-agent orchestrator pattern** where specialized sub-agents handle different types of queries.
 
+### GraphRAG Pattern Implementation
+
+This agent implements **GraphRAG** as defined by the [Neo4j GraphRAG Pattern Catalog](https://graphrag.com/concepts/intro-to-graphrag/):
+
+> *"GraphRAG is Retrieval Augmented Generation (RAG) using a Knowledge Graph. It's a set of RAG patterns that leverage a graph structure for retrieval."*
+
+| Pattern | Status | Description |
+|---------|--------|-------------|
+| **Cypher Templates** | ✅ | Pre-defined Cypher queries for structured data (products, regulations, portfolios) |
+| **Graph-Enhanced Vector Search** | ✅ | Vector search + graph context expansion for mentioned entities |
+| **Basic Retriever** | ✅ | Direct graph traversal for entity lookups |
+| **Pattern Matching** | ✅ | Cypher MATCH patterns in all graph queries |
+
+> **Note**: This is not Microsoft's GraphRAG implementation (which uses community detection and hierarchical summaries). We implement the broader GraphRAG patterns from the Neo4j catalog, optimized for structured data retrieval without hallucination.
+
 ### Agent Architecture (Vandelay Search)
 
 ```mermaid
@@ -172,12 +187,24 @@ The platform includes sample data showcasing real banking use cases:
 - Access to an LLM endpoint (OpenAI-compatible)
 - Access to a LlamaStack vector store endpoint
 
-### 1. Clone and Configure
+### Clone the Repository
 
 ```bash
 git clone https://github.com/vandelay-corp/vandelay-ai.git
 cd vandelay-ai
+```
 
+Choose one of the agents below based on your use case:
+
+---
+
+### Option A: Vandelay Search (FSI Banking Agent)
+
+Use this agent for FSI (Financial Services Industry) queries about banking products, regulations, and risk management.
+
+#### 1. Configure
+
+```bash
 # Copy the template and add your credentials
 cp openshift/local-stack.template.yaml openshift/local-stack.yaml
 
@@ -188,35 +215,37 @@ cp openshift/local-stack.template.yaml openshift/local-stack.yaml
 # - Vector store ID (VECTOR_STORE_ID)
 ```
 
-### 2. Build the Agent Image
+#### 2. Build the Agent Image
 
 ```bash
 podman build -t vandelay-search:latest -f vandelay_search/Dockerfile vandelay_search/
 ```
 
-### 3. Start the Platform
+#### 3. Start the Platform
 
 ```bash
 # Start Neo4j + Agent in a single pod
 podman kube play openshift/local-stack.yaml
 ```
 
-### 4. Load Sample Data
+#### 4. Ingest Data
 
 ```bash
-# Load knowledge graph data
+# Clear existing data and load FSI knowledge graph
+# Use the same password you set in local-stack.yaml
 NEO4J_URI="bolt://localhost:7687" \
 NEO4J_USERNAME="neo4j" \
-NEO4J_PASSWORD="your-password" \
+NEO4J_PASSWORD="your-password-from-local-stack-yaml" \
 python -m data_ingestion.ingest_graph --clear
 
-# Load vector store data  
+# Clear existing data and load FSI documents into vector store
+# Use the same values you set in local-stack.yaml
 LLAMASTACK_BASE_URL="https://your-llamastack-endpoint" \
 VECTOR_STORE_ID="your-vector-store-id" \
 python -m data_ingestion.ingest_vector --clear
 ```
 
-### 5. Access the Platform
+#### 5. Access
 
 | Service | URL |
 |---------|-----|
@@ -224,6 +253,85 @@ python -m data_ingestion.ingest_vector --clear
 | **Neo4j Browser** | http://localhost:7474 |
 
 Select `vandelay_search` from the agent dropdown and start chatting!
+
+#### 6. Stop the Platform
+
+```bash
+podman kube down openshift/local-stack.yaml
+```
+
+---
+
+### Option B: Vandelay Migration (Migration Assistant)
+
+Use this agent for VCS 1.0 to Vandelay Cloud (BareMetal OpenShift) migration assistance.
+
+#### 1. Start Neo4j
+
+```bash
+podman kube play openshift/neo4j/pod.yaml
+
+# Check openshift/neo4j/pod.yaml for NEO4J_AUTH credentials
+# Format is "username/password" (e.g., neo4j/your-password)
+```
+
+#### 2. Ingest Data
+
+```bash
+# Clear existing data and load migration graph from CSV
+# Use the password from openshift/neo4j/pod.yaml (NEO4J_AUTH value after the slash)
+NEO4J_URI="bolt://localhost:7687" \
+NEO4J_USERNAME="neo4j" \
+NEO4J_PASSWORD="<password-from-neo4j-pod-yaml>" \
+python -m data_ingestion.ingest_migration_graph --clear
+
+# Clear existing data and load migration documents into vector store
+LLAMASTACK_BASE_URL="<your-llamastack-endpoint>" \
+MIGRATION_VECTOR_STORE_ID="<your-migration-vector-store-id>" \
+python -m data_ingestion.ingest_migration_vector --clear
+```
+
+#### 3. Build the Agent Image
+
+```bash
+# Build from repository root (requires access to multiple packages)
+podman build -t vandelay-migration:latest -f vandelay_migration/Dockerfile .
+```
+
+#### 4. Configure and Run Agent
+
+```bash
+# Create .env file with your credentials
+# Use the same Neo4j password from openshift/neo4j/pod.yaml
+cat > .env << 'EOF'
+NEO4J_URI=bolt://host.containers.internal:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=<password-from-neo4j-pod-yaml>
+OPENAI_API_BASE=<your-llm-endpoint>
+OPENAI_API_KEY=<your-api-key>
+LLAMASTACK_BASE_URL=<your-llamastack-endpoint>
+MIGRATION_VECTOR_STORE_ID=<your-migration-vector-store-id>
+EOF
+
+# Run the agent (port 8001 to avoid conflict if running both agents)
+podman run -d --name vandelay-migration -p 8001:8000 --env-file .env vandelay-migration:latest
+```
+
+#### 5. Access
+
+| Service | URL |
+|---------|-----|
+| **ADK Web UI** | http://localhost:8001 |
+| **Neo4j Browser** | http://localhost:7474 |
+
+Select `vandelay_migration` from the agent dropdown and start chatting!
+
+#### 6. Stop the Platform
+
+```bash
+podman stop vandelay-migration && podman rm vandelay-migration
+podman kube down openshift/neo4j/pod.yaml
+```
 
 ---
 

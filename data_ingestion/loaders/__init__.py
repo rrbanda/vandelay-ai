@@ -1,22 +1,26 @@
 """
-FSI Data Loaders
-================
+Data Loaders
+============
 
 Loaders for populating Neo4j Knowledge Graph and LlamaStack Vector Store.
 
+Includes:
+- FSI (Financial Services) data loaders
+- Migration data loaders (VCS to Vandelay Cloud)
+
 Usage:
     from data_ingestion.loaders import FSIGraphLoader, FSIVectorLoader
+    from data_ingestion.loaders import MigrationGraphLoader
     
-    # Load to Neo4j
+    # Load FSI data to Neo4j
     graph_loader = FSIGraphLoader()
     graph_loader.initialize_schema(clear_first=True)
     graph_loader.load_products(products_data)
-    graph_loader.load_regulations(regulations_data)
-    graph_loader.load_risks(risks_data)
     
-    # Load to Vector Store
-    vector_loader = FSIVectorLoader()
-    vector_loader.load_from_directory("data_ingestion/data/fsi_documents")
+    # Load Migration data from CSV
+    migration_loader = MigrationGraphLoader()
+    migration_loader.initialize_schema(clear_first=True)
+    migration_loader.load_from_csv("data/migration_csv")
 """
 
 from data_ingestion.loaders.schema import (
@@ -36,9 +40,17 @@ from data_ingestion.loaders.graph_loader import (
 from data_ingestion.loaders.vector_loader import (
     FSIVectorLoader,
 )
+from data_ingestion.loaders.migration_loader import (
+    MigrationGraphLoader,
+)
+from data_ingestion.loaders.migration_schema import (
+    create_migration_schema,
+    clear_migration_data,
+    get_migration_schema_summary,
+)
 
 __all__ = [
-    # Schema
+    # FSI Schema
     "NODE_CONSTRAINTS",
     "INDEXES",
     "create_constraints",
@@ -47,9 +59,14 @@ __all__ = [
     "clear_database",
     "drop_all_constraints",
     "get_schema_summary",
-    # Graph Loader
+    # FSI Graph Loader
     "FSIGraphLoader",
     "get_driver",
-    # Vector Loader
+    # FSI Vector Loader
     "FSIVectorLoader",
+    # Migration Loader
+    "MigrationGraphLoader",
+    "create_migration_schema",
+    "clear_migration_data",
+    "get_migration_schema_summary",
 ]

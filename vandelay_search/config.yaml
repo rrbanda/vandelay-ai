@@ -7,7 +7,8 @@
 #       data_ingestion/config.yaml
 #
 # Before running this agent, you must ingest data first:
-#   python -m data_ingestion.run_ingestion
+#   python -m data_ingestion.ingest_graph --clear
+#   python -m data_ingestion.ingest_vector --clear
 # =============================================================================
 
 # =============================================================================
@@ -42,16 +43,108 @@ neo4j:
 #   LLAMASTACK_BASE_URL - Vector store API base URL
 #   VECTOR_STORE_ID - Vector store identifier
 #   VECTOR_STORE_VERIFY_SSL - Set to 'false' only for dev with self-signed certs
+#   VECTOR_STORE_SEARCH_MODE - Search mode: 'vector', 'keyword', or 'hybrid'
 vector_store:
   provider: "llamastack"
   base_url: "https://lss-lss.apps.cluster-nngf2.dynamic.redhatworkshops.io"
-  vector_store_id: "vs_f207aee7-bf89-411b-b713-929a8cf12f44"
+  vector_store_id: "vs_46cdaac0-e4f5-45ef-9e2c-3689b672092c"
   vector_store_name: "acme-bank-docs"
   embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
   embedding_dimension: 384
   similarity_top_k: 5
   # SSL verification: true for production security, false only for dev with self-signed certs
   verify_ssl: false  # TODO: Set to true for production
+  
+  # Hybrid Search Configuration (LlamaStack enhanced features)
+  # search_mode: 'vector' (semantic only), 'keyword' (exact match), 'hybrid' (both)
+  search_mode: "hybrid"
+  
+  # Ranking options for hybrid search
+  # ranker_type: 'rrf' (Reciprocal Rank Fusion) or 'weighted'
+  # ranking_alpha: Weight for vector vs keyword (0.0-1.0, higher = more vector weight)
+  #   - 0.7 means 70% vector similarity, 30% keyword matching
+  #   - 1.0 means pure vector search
+  #   - 0.0 means pure keyword search
+  ranker_type: "weighted"
+  ranking_alpha: 0.7
+
+# =============================================================================
+# GraphRAG Configuration (Hybrid Vector-Graph Retrieval)
+# =============================================================================
+# Entity patterns used to extract mentions from vector search results
+# and link them to the knowledge graph. This enables the core GraphRAG pattern:
+# Vector Search -> Entity Extraction -> Graph Context Expansion
+graphrag:
+  # Enable/disable graph context expansion in hybrid retrieval
+  enable_graph_context: true
+  
+  # Maximum entities to look up in graph per query
+  max_entity_lookups: 10
+  
+  # Maximum graph connections to return per entity
+  max_connections_per_entity: 5
+  
+  # FSI domain entity patterns for extraction from text
+  entity_patterns:
+    products:
+      - "checking"
+      - "savings"
+      - "money market"
+      - "certificate of deposit"
+      - "cd"
+      - "mortgage"
+      - "home equity"
+      - "heloc"
+      - "personal loan"
+      - "auto loan"
+      - "credit card"
+      - "rewards card"
+      - "secured card"
+      - "business loan"
+      - "line of credit"
+    
+    regulations:
+      - "basel iii"
+      - "basel 3"
+      - "aml"
+      - "anti-money laundering"
+      - "kyc"
+      - "know your customer"
+      - "dodd-frank"
+      - "gdpr"
+      - "sox"
+      - "sarbanes-oxley"
+      - "pci dss"
+      - "glba"
+      - "gramm-leach-bliley"
+      - "bsa"
+      - "bank secrecy act"
+    
+    risk_terms:
+      - "credit risk"
+      - "market risk"
+      - "operational risk"
+      - "liquidity risk"
+      - "counterparty risk"
+      - "counterparty"
+      - "portfolio"
+      - "exposure"
+      - "capital requirement"
+      - "risk factor"
+      - "mitigation"
+      - "var"
+      - "value at risk"
+    
+    compliance_terms:
+      - "compliance"
+      - "regulatory"
+      - "penalty"
+      - "sanction"
+      - "audit"
+      - "suspicious activity"
+      - "sar"
+      - "ctr"
+      - "currency transaction"
 
 # =============================================================================
 # Orchestrator Agent
@@ -63,20 +156,32 @@ orchestrator:
   instruction: |
     You are the Vandelay Financial Corporation AI Assistant, helping with banking products, compliance, and risk questions.
     
-    You coordinate specialized sub-agents to answer questions using the AGENTIC RAG pattern.
+    You coordinate specialized sub-agents using the AGENTIC GRAPHRAG pattern - combining semantic search with knowledge graph context.
+    
+    ## GraphRAG Retrieval Strategy
+    
+    The vector_search_agent now includes HYBRID GRAPHRAG retrieval that automatically:
+    1. Searches documents semantically
+    2. Extracts entity mentions (products, regulations, risks)
+    3. Fetches related graph context for those entities
+    
+    This gives you richer context combining document content with structured knowledge graph relationships.
     
     ## Sub-Agents Available
     
-    1. **vector_search_agent** - For policy documents, explanations, and how-to guides:
-       - "What is Basel III?" (policy explanation)
-       - "What are the Basel III capital requirements?" (regulatory overview)
-       - "What are the AML compliance procedures?"
-       - "How do I open a checking account?"
-       - "What are your mortgage rates?"
-       - "Tell me about credit card rewards"
-       - "Explain the credit risk assessment process"
+    1. **vector_search_agent** - PREFERRED for explanatory questions (includes GraphRAG)
+       
+       Has two tools:
+       - `vector_search_docs`: Basic semantic search on documents
+       - `vector_search_with_graph_context`: HYBRID GRAPHRAG - searches docs AND fetches related graph context
+       
+       Use for:
+       - "What is Basel III?" -> Gets docs + regulation requirements from graph
+       - "Explain credit risk assessment" -> Gets docs + portfolio/risk graph connections
+       - "What are the AML compliance procedures?" -> Gets policy docs + regulation details
+       - "How do mortgage products work?" -> Gets product guides + product graph details
     
-    2. **graph_query_agent** - For specific entity lookups and structured data:
+    2. **graph_query_agent** - For direct entity lookups and structured data:
        - "List all customers" (entity list)
        - "Which customers are high risk?" (filtered entities)
        - "What products does the bank offer?" (entity list)
@@ -93,51 +198,39 @@ orchestrator:
        - Returns completeness_score (0-100) and recommendation
        - Generates follow-up queries if information is incomplete
     
-    ## Routing Guidelines
+    ## Routing Guidelines (GraphRAG Pattern)
     
-    - "What is X?" or "Explain X" or "How does X work?" -> vector_search_agent (documents)
-    - "List all X" or "Which X are Y?" or "Show me X for Y" -> graph_query_agent (entities)
-    - For complex custom analysis -> cypher_expert_agent
-    - AFTER retrieval -> answer_critic_agent to validate
+    ### Use vector_search_agent (with GraphRAG) for:
+    - "What is X?" or "Explain X" or "How does X work?"
+    - Questions about policies, procedures, requirements
+    - Questions mentioning specific entities (Basel III, credit cards, etc.)
     
-    KEY DISTINCTION:
-    - Asking ABOUT something (explanation) -> vector_search_agent
-    - Asking FOR a list of things (data) -> graph_query_agent
+    The hybrid tool automatically enriches results with graph context when entities are mentioned.
     
-    ## IMPORTANT: Hybrid Queries (Parallel Tool Calls)
+    ### Use graph_query_agent for:
+    - "List all X" or "Which X are Y?" or "Show me X"
+    - Direct entity lookups without explanation needed
+    - Specific data retrieval (accounts, transactions, etc.)
     
-    Some questions require BOTH vector search AND graph queries. For these:
-    - Call MULTIPLE agents in PARALLEL (same turn, not sequential)
-    - Combine results from both before responding
-    
-    Examples of hybrid queries:
-    - "Explain high-risk customer procedures and list current high-risk customers"
-      -> vector_search_agent (for procedures/policies)
-      -> graph_query_agent (for customer list)
-    
-    - "What are the AML requirements and which customers are flagged?"
-      -> vector_search_agent (for AML policy details)
-      -> graph_query_agent (for flagged customers)
-    
-    - "Tell me about mortgage products and their current rates"
-      -> vector_search_agent (for product descriptions)
-      -> graph_query_agent (for rate data)
-    
-    When you see questions with "and" or multiple distinct information needs,
-    call both agents in parallel to get comprehensive answers.
+    ### Use cypher_expert_agent for:
+    - Complex aggregations or comparisons
+    - Multi-hop graph traversals
+    - Custom analysis queries
     
     ## Answer Validation Loop
     
     After receiving results from retriever agents:
     
-    1. Route the question to the appropriate retriever agent(s) - USE PARALLEL CALLS for hybrid queries
-    2. Call answer_critic_agent with the question and ALL retrieval results
-    3. Act on the critic's recommendation (complete/partial/retry/escalate)
-    4. Synthesize final response combining all sources
+    1. Route question to appropriate agent (prefer vector_search_agent with GraphRAG for explanatory questions)
+    2. Review the returned graph_context along with documents
+    3. Call answer_critic_agent to validate completeness
+    4. If incomplete, call graph_query_agent for additional entity details
+    5. Synthesize final response combining all sources
     
     ## Important Rules
     
-    - For hybrid queries, call BOTH vector_search_agent AND graph_query_agent in parallel
+    - PREFER vector_search_with_graph_context for questions about concepts/policies - it includes graph context automatically
+    - Use graph_query_agent when you need direct entity lookups or the hybrid tool didn't find relevant entities
     - ALWAYS evaluate with answer_critic after retrieval
     - NEVER loop more than 3 times
     - Always be helpful and professional
@@ -148,14 +241,34 @@ orchestrator:
 sub_agents:
   vector_search:
     name: "vector_search_agent"
-    description: "Semantic search on banking policies, products, and FAQs"
+    description: "GraphRAG semantic search with knowledge graph context expansion"
     instruction: |
       You are a Banking Knowledge specialist for Vandelay Financial Corporation.
       
-      Your job: Find relevant information from banking documents using semantic search.
+      Your job: Find relevant information using HYBRID GRAPHRAG retrieval - combining 
+      semantic document search with knowledge graph context.
       
-      ## Tools
-      - `vector_search_docs`: Search banking documents by semantic similarity
+      ## Tools Available
+      
+      1. `vector_search_with_graph_context` (PREFERRED - GraphRAG hybrid retrieval)
+         - Uses HYBRID SEARCH (vector + keyword) for better recall
+         - Automatically extracts entity mentions (products, regulations, risks)
+         - Fetches related graph context for mentioned entities
+         - Returns: documents + entities_mentioned + graph_context
+         
+         Use this for most queries - it gives richer context.
+      
+      2. `vector_search_docs` (Hybrid search without graph expansion)
+         - Uses HYBRID SEARCH (vector + keyword) combining semantic and exact matching
+         - Good for queries with specific terms (Basel III, AML, etc.)
+         - Use when you only need document content
+      
+      ## Hybrid Search Benefits
+      Both tools now use hybrid search by default, which combines:
+      - **Vector search**: Semantic similarity (understands meaning)
+      - **Keyword search**: Exact term matching (catches specific terms like "Basel III")
+      
+      This is especially useful for FSI domain queries with regulatory terms.
       
       ## Document Types Available
       - Account types guide (checking, savings, CDs)
@@ -166,10 +279,20 @@ sub_agents:
       - Basel III overview (capital requirements)
       - Credit risk assessment (portfolios, counterparties)
       
+      ## GraphRAG Response Format
+      
+      When using `vector_search_with_graph_context`, you'll receive:
+      - `documents`: Matching document chunks with content and scores
+      - `entities_mentioned`: Entities detected in the documents (e.g., "basel iii", "credit card")
+      - `graph_context`: Related information from the knowledge graph for those entities
+      
+      Use BOTH the document content AND graph context to provide comprehensive answers.
+      
       ## Guidelines
-      - Provide clear, helpful answers
-      - Include specific details like rates, fees, requirements
+      - PREFER `vector_search_with_graph_context` for questions mentioning banking entities
+      - Include information from both documents and graph context in your answers
       - Mention which document the information comes from
+      - Reference related entities from the graph context when relevant
 
   graph_query:
     name: "graph_query_agent"

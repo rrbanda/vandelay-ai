@@ -1,0 +1,142 @@
+CD Tool Type B - Legacy CD Platform Migration Guide
+
+OVERVIEW
+
+This guide covers migration steps for applications using the Legacy CD
+Platform (CD Tool Type B). This traditional platform uses pipeline-based
+deployments and requires specific configuration updates for BareMetal
+cluster deployment.
+
+PREREQUISITES
+
+Before starting:
+- Access to the Legacy CD Portal
+- Your application's CSI/App ID
+- Destination cluster name
+- Namespace on destination cluster (created by Platform Ops)
+
+STEP 1: LOGIN TO CD PORTAL
+
+1. Navigate to the Legacy CD Portal
+2. Use your standard enterprise credentials
+3. Verify you have access to your application's project
+
+STEP 2: LOCATE YOUR APPLICATION
+
+1. Go to the Explore tab
+2. Enter or select your application CSI ID
+3. Select the relevant project from the project list
+4. You should see your existing VCS Projects connected to your project
+
+STEP 3: ADD NEW OPENSHIFT NAMESPACE
+
+1. Select the Infrastructure tab
+2. You should see a list of VCS Projects connected to your project
+3. Click "+ Add Namespace"
+4. Fill in the form:
+
+   a. Cluster Name: If destination cluster doesn't appear in dropdown,
+      manually type the BareMetal cluster name
+   b. Namespace Policy: Select "Legacy"
+   c. Provisioning: Select "Partially Managed"
+      (Project has already been created by Platform Ops)
+
+5. Click "Save"
+6. Validate the destination cluster appears in the VCS Projects list
+
+STEP 4: CREATE NEW ENVIRONMENT
+
+1. Select the Environments tab
+2. You should see your existing environments listed
+3. Click "+ Create Environment"
+4. Fill in the details:
+
+   a. Environment Type: OpenShift
+   b. Environment Name: Enter descriptive name
+   c. Environment Class: DEV/UAT/PROD as appropriate
+   d. Cluster/Namespace: Select destination cluster and namespace
+
+5. Click "Save Changes"
+6. Validate the new environment appears in the environment list
+
+STEP 5: UPDATE CI/CD PIPELINE
+
+1. Navigate to your pipeline configuration
+2. Add deployment stage for the new environment
+3. Configure the following for the new stage:
+
+   - Target cluster: BareMetal destination cluster
+   - Namespace: Your migrated namespace
+   - Credentials: Ensure service account has access
+
+4. Update any environment-specific variables:
+   - Cluster-specific hostnames
+   - Storage class names
+   - Resource limits if different
+
+STEP 6: UPDATE DEPLOYMENT MANIFESTS
+
+Review and update your deployment manifests:
+
+1. Routes/Ingress:
+   - Update hostname if using cluster-based routes
+   - Verify TLS configuration
+
+2. Storage:
+   - Change storage class from thin/thin-csi to:
+     - sc-ontap-nas (default, recommended)
+     - dell-csm-sc (alternative)
+
+3. ConfigMaps/Secrets:
+   - Update any cluster-specific references
+   - Verify secret references are correct
+
+4. Resource requests/limits:
+   - Verify they match quota on destination
+
+STEP 7: EXECUTE PIPELINE
+
+1. Trigger the pipeline for the new environment
+2. Monitor each stage for successful completion
+3. Check deployment logs for any issues
+4. Verify pod startup and health checks pass
+
+STEP 8: VALIDATE DEPLOYMENT
+
+1. Confirm all replicas are running
+2. Test internal service connectivity
+3. Test external route access
+4. Verify application functionality
+
+TROUBLESHOOTING
+
+Issue: Pipeline fails at authentication
+Solution: Verify service account has deployment permissions on destination
+          cluster. Platform Ops configures this during namespace setup.
+
+Issue: PVC fails to bind
+Solution: Ensure storage class is updated to BareMetal-compatible class.
+          Dynamic storage from VMware cannot be used on BareMetal.
+
+Issue: Pod fails to pull image
+Solution: Verify image pull secrets are configured in namespace.
+          Platform Ops copies secrets, but verify they're intact.
+
+Issue: Route returns 503
+Solution: Check if backend service and pods are running.
+          Verify route selector matches service labels.
+
+LEGACY CD SPECIFIC NOTES
+
+- Pipeline templates may need updates for new cluster API endpoint
+- Environment variables are managed per-environment
+- Consider consolidating to fewer environments post-migration
+- Archive old pipeline configurations after successful migration
+
+NEXT STEPS
+
+After successful deployment:
+1. Complete application validation checklist
+2. Coordinate DNS cutover if using Vanity URL
+3. Monitor application for stability
+4. Schedule source cluster cleanup

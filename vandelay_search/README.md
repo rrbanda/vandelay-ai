@@ -6,6 +6,39 @@ A production-ready GraphRAG agent built with Google ADK for FSI (Financial Servi
 
 This agent combines **vector search** and **graph traversal** to provide intelligent answers about banking products, regulations, and risk management.
 
+## GraphRAG Pattern Implementation
+
+This agent implements GraphRAG patterns as defined by the [Neo4j GraphRAG Pattern Catalog](https://graphrag.com/concepts/intro-to-graphrag/):
+
+> *"GraphRAG is Retrieval Augmented Generation (RAG) using a Knowledge Graph."*
+
+### Implemented Patterns
+
+| Pattern | Implementation | Description |
+|---------|----------------|-------------|
+| **[Cypher Templates](https://graphrag.com/reference/retrieval/cypher-templates/)** | `graph_query/tools.py`, `config.yaml` | Pre-defined, parameterized Cypher queries for common lookups (products, regulations, portfolios) |
+| **[Graph-Enhanced Vector Search](https://graphrag.com/reference/retrieval/graph-enhanced-vector-search/)** | `vector_search_with_graph_context()` | Vector search followed by graph context expansion for mentioned entities |
+| **[Basic Retriever](https://graphrag.com/reference/retrieval/basic-retriever/)** | `get_all_products()`, `get_regulation_details()`, etc. | Direct graph traversal from entry points |
+| **[Pattern Matching](https://graphrag.com/reference/retrieval/pattern-matching/)** | All Cypher queries | MATCH patterns for structured data retrieval |
+
+### What This Is NOT
+
+To be precise about terminology:
+
+- **Not Microsoft GraphRAG**: We do not implement community detection (Leiden algorithm) or hierarchical community summaries
+- **Not LLM-extracted entities**: Our knowledge graph is built from structured data (not extracted from unstructured text via LLM)
+- **Not Global Search**: We don't have corpus-wide thematic summaries
+
+### Why This Matters (Anti-Hallucination)
+
+The key benefit of our GraphRAG approach for structured data:
+
+1. **Graph query tools return exact database values** - no LLM generation of facts
+2. **Cypher Templates ensure deterministic retrieval** - queries are pre-defined, not generated
+3. **Hybrid retrieval** combines semantic understanding (vector) with precise lookups (graph)
+
+This prevents hallucination on structured data like product details, fees, regulatory requirements, and customer information.
+
 ### Use Case: Vandelay Financial Corporation AI Assistant
 
 - **Product Queries**: Find checking accounts, mortgages, credit cards
@@ -20,16 +53,16 @@ This agent combines **vector search** and **graph traversal** to provide intelli
 The agent queries a Neo4j Knowledge Graph and LlamaStack Vector Store that must be populated with FSI data.
 
 ```bash
-# From the repository root, run the data ingestion pipeline
-python -m data_ingestion.run_ingestion
+# From the repository root, run data ingestion
 
-# This will:
-# 1. Extract entities from FSI documents using LLM
-# 2. Build the Neo4j Knowledge Graph
-# 3. Build the LlamaStack Vector Store
+# Clear existing data and load FSI knowledge graph
+python -m data_ingestion.ingest_graph --clear
+
+# Clear existing data and load FSI documents into vector store
+python -m data_ingestion.ingest_vector --clear
 ```
 
-See `data_ingestion/README.md` for detailed instructions.
+See `data_ingestion/README.md` for detailed instructions and environment variable configuration.
 
 ## Architecture
 
@@ -87,8 +120,9 @@ export ADK_MODEL="openai/your-model-name"
 ### 4. Ingest Data (REQUIRED)
 
 ```bash
-# From repository root
-python -m data_ingestion.run_ingestion
+# From repository root - clear existing data and load FSI data
+python -m data_ingestion.ingest_graph --clear
+python -m data_ingestion.ingest_vector --clear
 ```
 
 ### 5. Run Agent
@@ -204,5 +238,5 @@ See `openshift/vandelay-search/README.md` for detailed deployment instructions i
 ## Credits
 
 - Built with [Google Agent Development Kit](https://google.github.io/adk-docs/)
-- FSI Knowledge Graph patterns from Essential GraphRAG
+- GraphRAG patterns from [Neo4j GraphRAG Pattern Catalog](https://graphrag.com/concepts/intro-to-graphrag/)
 - Container patterns from [ADK Samples](https://github.com/google/adk-samples)

@@ -1,0 +1,204 @@
+Network, EgressIP, and Firewall Guide
+
+OVERVIEW
+
+This guide covers network-related changes required during VMware to BareMetal
+OpenShift migration, including EgressIP changes, firewall rules, and proxy
+configuration.
+
+IMPORTANT: Your application's EgressIP will change during migration.
+
+UNDERSTANDING EGRESSIP
+
+EgressIP is the IP address used when your application makes outbound
+connections. Different clusters have different EgressIP ranges:
+
+- VMware clusters: Typically in 192.168.x.x range (example)
+- BareMetal clusters: Typically in 10.x.x.x range (example)
+
+When you migrate, any systems that whitelist your EgressIP must be updated.
+
+TYPES OF EGRESS TRAFFIC
+
+1. Internet-Bound Traffic:
+   - Traffic going to external internet services
+   - Routed through corporate proxy
+   - AUTOMATICALLY handled by Platform Ops
+
+2. Internal System Traffic:
+   - Traffic to internal databases, SFTP, MQ, mainframes
+   - Direct network connections
+   - REQUIRES action from application team
+
+INTERNET EGRESS (AUTOMATIC)
+
+Platform Ops automatically handles:
+- Creating firewall rules for internet-bound EgressIP traffic
+- Coordinating with firewall team
+- Rules are created before your migration window
+
+Note:
+- Old rules (VMware cluster) will NOT be deleted automatically
+- Both rule sets will coexist
+- Delete old rules after successful migration validation
+
+INTERNAL SYSTEM EGRESS (MANUAL)
+
+You must update firewall rules for internal system connections.
+
+Step 1: Identify Internal System Connections
+
+Review your application for connections to:
+- Databases (Oracle, SQL Server, PostgreSQL, etc.)
+- SFTP/FTP servers
+- Message queues (MQ, Kafka, RabbitMQ)
+- Mainframe systems (CICS, IMS)
+- Internal APIs and microservices
+- Monitoring and logging systems
+- LDAP/Active Directory
+- Email servers (SMTP)
+
+Step 2: Document Connection Details
+
+For each internal system, document:
+- Destination hostname or IP address
+- Destination port(s)
+- Protocol (TCP/UDP)
+- Business justification
+
+Step 3: Get Your New EgressIP
+
+Find your destination EgressIP:
+
+1. Query the migration assistant:
+   "What are the destination egress IPs for [namespace]?"
+
+2. Or check the cluster configuration for your destination cluster
+
+Step 4: Submit Firewall Request
+
+1. Navigate to Service Request Portal
+2. Select "Firewall Rule Request"
+3. Fill in the request:
+
+   Source IP: Your new BareMetal EgressIP(s)
+   Destination: Internal system IP/hostname
+   Port: Required port(s)
+   Protocol: TCP or UDP
+   Direction: Outbound
+   Justification: Migration from VMware to BareMetal OpenShift
+
+4. Submit request (Lead time: 14 days minimum)
+
+Step 5: Validate Connectivity
+
+After migration and firewall rule implementation:
+
+1. Test connectivity from BareMetal pods:
+   - Use curl/wget for HTTP endpoints
+   - Use nc (netcat) for TCP port testing
+   - Check application logs for connection errors
+
+2. Monitor for timeouts or connection refused errors
+
+PRE-2023 FIREWALL RULES
+
+If your application had firewall rules created before EgressIP was
+implemented (approximately 2023):
+
+- These rules may not be aligned to an EgressIP
+- You must create NEW firewall requests
+- Existing rules cannot be automatically migrated
+
+PROXY CONFIGURATION
+
+Important: Proxy port is changing for BareMetal clusters!
+
+VMware clusters:
+- DEV/UAT: Port 9999
+- PROD: Port 7777
+
+BareMetal clusters:
+- ALL environments: Port 17777
+
+Required Actions:
+
+1. Update application configuration:
+   - Change proxy port from 9999 or 7777 to 17777
+   - Update environment variables referencing proxy port
+   - Update any hardcoded proxy configurations
+
+2. Submit firewall request (if needed):
+   - Request must include new EgressIP
+   - Request must include new port (17777)
+
+Proxy Host:
+- The proxy hostname typically remains the same
+- Only the port changes
+- Verify proxy hostname in your cluster configuration
+
+COMMON PROXY ERRORS
+
+Error: "HTTP/1.1 403 Forbidden"
+Cause: Remote URL is not whitelisted on corporate proxy
+Solution: Submit URL whitelisting request
+
+Error: Connection timeout to proxy
+Cause: Firewall not updated for new EgressIP
+Solution: Submit firewall request for proxy access
+
+TROUBLESHOOTING
+
+Issue: Connection refused to internal system
+Possible causes:
+- Firewall rule not yet implemented
+- Wrong destination IP/port in request
+
+Solution:
+- Check firewall request status
+- Verify destination details are correct
+- Allow 24-48 hours for rule propagation
+
+Issue: Intermittent connectivity
+Possible causes:
+- Rules not propagated to all data centers
+- Load balancer not updated
+
+Solution:
+- Allow additional time for propagation
+- Contact network team if persists
+
+Issue: Connection works from pod but not from application
+Possible causes:
+- Application configuration not updated
+- Environment variables still pointing to old values
+
+Solution:
+- Verify application configuration
+- Check environment variable values
+
+Issue: DNS resolution fails for internal hostname
+Possible causes:
+- DNS not configured for new network
+- Internal DNS different on BareMetal
+
+Solution:
+- Use IP address instead of hostname (if allowed)
+- Request DNS configuration update
+
+FIREWALL REQUEST TIMELINE
+
+- Submit requests: At least 14 days before migration
+- Processing time: 5-10 business days
+- Propagation time: 24-48 hours after implementation
+- Total: Plan for 14 days minimum
+
+CHECKLIST
+
+[ ] Identify all internal system connections
+[ ] Document destination IPs, ports, protocols
+[ ] Get destination EgressIP from cluster configuration
+[ ] Submit firewall requests (14 days lead time)
+[ ] Update proxy port configuration (9999/7777 → 17777)
+[ ] Test connectivity after migration
+[ ] Delete old firewall rules after validation

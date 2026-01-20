@@ -1,0 +1,192 @@
+Migration Frequently Asked Questions (FAQ)
+
+GENERAL QUESTIONS
+
+Q: Why are we migrating from VMware OpenShift to BareMetal OpenShift?
+A: The migration provides several benefits:
+   - Reduced dependency on VMware licensing
+   - Better performance with direct hardware access
+   - Simplified infrastructure management
+   - Access to newer OpenShift features
+   - Cost optimization over time
+
+Q: What is the timeline for migration?
+A: Migration proceeds in phases:
+   - DEV: First wave (check your specific dates)
+   - UAT: Following DEV completion
+   - PROD: Multiple waves after UAT
+   Each environment has a specific window. Check your namespace assignment
+   for exact dates.
+
+Q: What happens if I miss my migration window?
+A: Contact Platform Operations immediately. Depending on circumstances,
+   you may be assigned to a later wave or given an extension. Missing
+   windows without coordination may impact your application availability.
+
+Q: Do I need to do anything if my application is simple?
+A: Even simple applications require:
+   - Updating CD pipeline for destination cluster
+   - Deploying application to destination
+   - Validating functionality
+   Platform Ops handles much automatically, but deployment is your
+   responsibility.
+
+INFRASTRUCTURE QUESTIONS
+
+Q: Will my application's URL change?
+A: If using a Vanity URL: No, the URL stays the same.
+   If using cluster-based route: Yes, the hostname will change.
+   Recommendation: Implement a Vanity URL to avoid URL changes.
+
+Q: What is my new EgressIP?
+A: Your destination EgressIP is different from source. To find it:
+   - Ask the migration assistant: "What are egress IPs for [namespace]?"
+   - Check the cluster configuration for your destination cluster
+   This new IP must be whitelisted for internal system connections.
+
+Q: Will my firewall rules be migrated automatically?
+A: Internet-bound rules: Yes, Platform Ops handles these.
+   Internal system rules: No, you must submit new firewall requests
+   with your destination EgressIP.
+
+Q: What storage classes are available on BareMetal?
+A: BareMetal clusters use:
+   - sc-ontap-nas (default, recommended)
+   - dell-csm-sc (alternative)
+   VMware storage classes (thin, thin-csi) are NOT available.
+   Update your PVC definitions to use new storage classes.
+
+Q: Will my data be migrated automatically?
+A: PVC definitions are copied, but dynamic storage data is NOT migrated.
+   For stateful applications, plan data migration using:
+   - Backup/restore
+   - Application-level replication
+   - Export/import procedures
+
+Q: What about the proxy port change?
+A: Proxy port changes on BareMetal:
+   - VMware: Port 9999 (DEV/UAT), 7777 (PROD)
+   - BareMetal: Port 17777 (all environments)
+   Update your application configuration accordingly.
+
+CD PIPELINE QUESTIONS
+
+Q: Which CD tool does my application use?
+A: Check your current deployment configuration or ask your team.
+   Common options:
+   - Enterprise CD Platform (Type A)
+   - Legacy CD Platform (Type B)
+   - Release Management Tool (Type C)
+   Each has specific migration steps - see the relevant guide.
+
+Q: Do I need to create a new namespace?
+A: No. Platform Ops creates your namespace on the destination cluster
+   as part of the project copy process. You deploy into the existing
+   namespace.
+
+Q: Why aren't my deployments copied automatically?
+A: Resources deployed via CD pipelines are intentionally NOT copied.
+   This ensures you:
+   - Use your standard deployment process
+   - Maintain configuration consistency
+   - Have proper CI/CD audit trail
+   Re-deploy using your CD tool.
+
+SECURITY QUESTIONS
+
+Q: Do I need new certificates?
+A: If using only Vanity URLs in SAN: No
+   If using cluster-based routes in SAN: Yes
+   Order new certificates with destination cluster routes in SAN list.
+   Allow 7 days lead time.
+
+Q: What about SSO configuration?
+A: If using Vanity URL: Usually no changes (same base URL)
+   If using cluster route: Submit SSO modification request
+   Also update SSO_REGHOST_HOSTNAME to destination cluster's value.
+
+Q: Are my secrets migrated?
+A: Yes, secrets are copied automatically:
+   - Managed secrets (Secrets API): Work automatically
+   - Unmanaged secrets (Secrets API): Work automatically
+   - Native secrets: Copied by Platform Ops
+   Verify secret access after migration.
+
+VALIDATION QUESTIONS
+
+Q: How do I know if migration was successful?
+A: Complete the validation checklist:
+   - All pods running
+   - Services accessible
+   - External connectivity works
+   - Internal connections work
+   - Application functionality verified
+   Document results and get stakeholder sign-off.
+
+Q: What if something isn't working after migration?
+A: 1. Check application logs for errors
+   2. Verify configuration (storage class, secrets, routes)
+   3. Check network connectivity (firewall rules, EgressIP)
+   4. Contact Platform Ops if infrastructure issue
+   5. Raise incident ticket for urgent issues
+
+Q: How long should I wait before deleting the source namespace?
+A: Recommended waiting periods:
+   - DEV: 1-2 weeks
+   - UAT: 2-4 weeks
+   - PROD: 4-8 weeks
+   Ensure no issues and no traffic to old cluster.
+
+SPECIAL CASES
+
+Q: What if my application uses Redis/Couchbase/Service Mesh?
+A: Operators must be installed by Platform Ops on destination cluster.
+   Raise a ticket requesting operator installation, then deploy your
+   resources. See the Operators Guide for details.
+
+Q: What if I have multiple namespaces for the same application?
+A: If both are on the same source cluster going to the same destination,
+   only ONE namespace can be copied (due to name conflicts).
+   Coordinate with Platform Ops on which to copy, or rename one.
+
+Q: What about batch jobs and scheduled tasks?
+A: Batch jobs are deployed via CD pipeline - update configuration.
+   Scheduled tasks (Autosys, etc.) may need OCCTO updates - raise
+   ticket with Platform Ops.
+
+Q: Can I test in destination cluster before cutover?
+A: Yes, recommended approach:
+   1. Deploy to destination cluster
+   2. Test with test traffic
+   3. Validate functionality
+   4. Then coordinate DNS cutover
+   5. Monitor after cutover
+
+TROUBLESHOOTING QUESTIONS
+
+Q: My pods won't start - what should I check?
+A: Common issues:
+   - Storage class not found: Update PVC to use sc-ontap-nas
+   - Image pull error: Verify image pull secrets
+   - Resource limits: Check quota in namespace
+   - Permissions: Verify service account configuration
+
+Q: My application can't connect to a database - what's wrong?
+A: Most likely causes:
+   - Firewall rules not updated with new EgressIP
+   - DNS resolution issues
+   - Connection string still pointing to old network
+   Submit firewall request if not already done; verify connection config.
+
+Q: Route returns 503 error - how do I fix it?
+A: 503 means service unavailable. Check:
+   - Backend pods are running
+   - Service has endpoints
+   - Health checks are passing
+   - Route selector matches service labels
+
+Q: Where do I get help?
+A: - Platform Operations team for infrastructure issues
+   - Raise incident ticket for urgent issues
+   - Reference specific migration guides for step-by-step help
+   - Ask the migration assistant for quick answers
