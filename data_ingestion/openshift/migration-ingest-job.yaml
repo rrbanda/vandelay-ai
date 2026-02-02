@@ -1,0 +1,108 @@
+# =============================================================================
+# Migration Graph Ingestion Job - OpenShift
+# =============================================================================
+# Runs the standalone ingestion script as a Kubernetes Job inside the cluster.
+# This allows direct access to Neo4j via internal service DNS.
+#
+# Prerequisites:
+#   1. Neo4j running in the cluster (or accessible via internal network)
+#   2. ConfigMap with CSV data files
+#   3. Secret with Neo4j credentials
+#
+# Usage:
+#   # Create the configmap with CSV data
+#   oc create configmap migration-csv-data \
+#     --from-file=namespaces.csv=./data/migration_csv/namespaces.csv \
+#     --from-file=cluster_mappings.csv=./data/migration_csv/cluster_mappings.csv \
+#     --from-file=cluster_configs.csv=./data/migration_csv/cluster_configs.csv \
+#     --from-file=migration_phases.csv=./data/migration_csv/migration_phases.csv \
+#     --from-file=storage_classes.csv=./data/migration_csv/storage_classes.csv
+#
+#   # Create secret (or use existing neo4j secret)
+#   oc create secret generic neo4j-credentials \
+#     --from-literal=NEO4J_PASSWORD=your-password
+#
+#   # Create the configmap with the Python script
+#   oc create configmap migration-ingest-script \
+#     --from-file=standalone_ingest.py=./standalone_ingest.py
+#
+#   # Run the job
+#   oc apply -f migration-ingest-job.yaml
+#
+#   # Check logs
+#   oc logs -f job/migration-graph-ingest
+#
+#   # Cleanup after success
+#   oc delete job migration-graph-ingest
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration-graph-ingest
+  labels:
+    app: migration-ingest
+    component: data-loader
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600  # Auto-delete after 1 hour
+  template:
+    metadata:
+      labels:
+        app: migration-ingest
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ingest
+          image: python:3.11-slim
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              echo "=== Migration Graph Ingestion ==="
+              echo "Installing neo4j driver..."
+              pip install --quiet neo4j
+              
+              echo "Running ingestion..."
+              python /scripts/standalone_ingest.py \
+                --uri "$NEO4J_URI" \
+                --username "$NEO4J_USERNAME" \
+                --password "$NEO4J_PASSWORD" \
+                --csv-dir /data \
+                --clear
+              
+              echo "=== Ingestion Complete ==="
+          env:
+            # Neo4j connection - use internal service DNS
+            - name: NEO4J_URI
+              value: "bolt://neo4j:7687"  # Update to your Neo4j service name
+            - name: NEO4J_USERNAME
+              value: "neo4j"
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-credentials
+                  key: NEO4J_PASSWORD
+          volumeMounts:
+            # CSV data files
+            - name: csv-data
+              mountPath: /data
+              readOnly: true
+            # Python script
+            - name: ingest-script
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: csv-data
+          configMap:
+            name: migration-csv-data
+        - name: ingest-script
+          configMap:
+            name: migration-ingest-script
