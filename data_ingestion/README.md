@@ -1,8 +1,81 @@
-# FSI Data Ingestion Module
+# Data Ingestion Module
 
-This module handles the ingestion of FSI (Financial Services Industry) data into both a **Neo4j Knowledge Graph** and a **LlamaStack Vector Store**.
+This module handles data ingestion into **Neo4j Knowledge Graph** and **LlamaStack Vector Store**.
 
 **This is a PREREQUISITE for running the RAG agent** - data must be ingested before the agent can query it.
+
+---
+
+## Migration Knowledge Graph (Standalone)
+
+Self-contained script to ingest VCS → Vandelay Cloud migration data.
+
+### Quick Start (Port Forward)
+
+```bash
+# 1. Port forward Neo4j from OpenShift
+oc port-forward svc/neo4j 7687:7687 &
+
+# 2. Run from this folder
+cd data_ingestion
+pip install neo4j
+python standalone_ingest.py --password YOUR_PASSWORD --clear
+```
+
+### Quick Start (OpenShift Job)
+
+```bash
+# Run inside OpenShift cluster
+cd data_ingestion/openshift
+./run-ingest.sh neo4j-service YOUR_PASSWORD
+```
+
+### Test Data Included
+
+```
+data/migration_csv/
+├── namespaces.csv         # 10 sample namespaces
+├── cluster_mappings.csv   # Source → Destination clusters
+├── cluster_configs.csv    # VIP, infra nodes, SSO
+├── migration_phases.csv   # DEV, UAT, PROD waves
+└── storage_classes.csv    # Storage class mappings
+```
+
+### Expected Output
+
+```
+Node counts:
+  Namespace: 10
+  SourceCluster: 2
+  DestinationCluster: 2
+  ClusterConfig: 2
+  EgressIP: 20
+  MigrationPhase: 5
+  StorageClass: 4
+
+Relationship counts:
+  MIGRATES_FROM: 10
+  MIGRATES_TO: 10
+  HAS_SOURCE_EGRESS: 10
+  HAS_DEST_EGRESS: 10
+  SCHEDULED_IN: 10
+  MAPS_TO: 2
+  HAS_CONFIG: 2
+  HAS_STORAGE_CLASS: 8
+```
+
+### Verify in Neo4j Browser
+
+```cypher
+-- List all namespaces with migration path
+MATCH (ns:Namespace)-[:MIGRATES_FROM]->(src:SourceCluster)
+MATCH (ns)-[:MIGRATES_TO]->(dest:DestinationCluster)
+RETURN ns.name, src.name, dest.name, ns.env
+```
+
+---
+
+## FSI Data Ingestion (Original)
 
 ## Architecture
 
