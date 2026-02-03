@@ -42,14 +42,16 @@ except ImportError:
 # Schema Definitions
 # =============================================================================
 
+# Using UNIQUE constraints (Community Edition compatible)
+# NODE KEY constraints require Enterprise Edition
 MIGRATION_NODE_CONSTRAINTS = [
-    "CREATE CONSTRAINT namespace_id IF NOT EXISTS FOR (n:Namespace) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT source_cluster_id IF NOT EXISTS FOR (n:SourceCluster) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT dest_cluster_id IF NOT EXISTS FOR (n:DestinationCluster) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT cluster_config_id IF NOT EXISTS FOR (n:ClusterConfig) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT egress_ip_id IF NOT EXISTS FOR (n:EgressIP) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT migration_phase_id IF NOT EXISTS FOR (n:MigrationPhase) REQUIRE (n.id) IS NODE KEY",
-    "CREATE CONSTRAINT storage_class_id IF NOT EXISTS FOR (n:StorageClass) REQUIRE (n.id) IS NODE KEY",
+    "CREATE CONSTRAINT namespace_id IF NOT EXISTS FOR (n:Namespace) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT source_cluster_id IF NOT EXISTS FOR (n:SourceCluster) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT dest_cluster_id IF NOT EXISTS FOR (n:DestinationCluster) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT cluster_config_id IF NOT EXISTS FOR (n:ClusterConfig) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT egress_ip_id IF NOT EXISTS FOR (n:EgressIP) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT migration_phase_id IF NOT EXISTS FOR (n:MigrationPhase) REQUIRE n.id IS UNIQUE",
+    "CREATE CONSTRAINT storage_class_id IF NOT EXISTS FOR (n:StorageClass) REQUIRE n.id IS UNIQUE",
 ]
 
 MIGRATION_INDEXES = [
